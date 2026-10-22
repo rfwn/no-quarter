@@ -1,0 +1,370 @@
+/* Game layer: missions, points, badges, savings and چینو.
+   Saffron (--reward) appears only on wins; red stays the action color. */
+
+/* ---------- Level chip ---------- */
+
+.level-chip {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.level-num {
+  font: 800 13px var(--font);
+  fill: var(--ink);
+}
+
+.level-ring {
+  transition: stroke-dashoffset 0.6s var(--ease);
+}
+
+/* ---------- Mission bar ---------- */
+
+.mission {
+  position: sticky;
+  top: 52px;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: var(--col);
+  margin: 0 auto;
+  padding: 8px var(--gutter);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  transition: background-color 0.4s var(--ease);
+}
+
+.mission.is-done {
+  background: var(--reward-soft);
+}
+
+.mission-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.mission-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mission-title span {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.mission.is-done .mission-title {
+  color: var(--reward-ink);
+}
+
+.mission-steps {
+  display: flex;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission-steps li {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* The track between nodes; in RTL it runs from each node toward the next one on its left. */
+.mission-steps li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  inset-inline-start: 50%;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.mission-steps li.is-on:not(:last-child)::before {
+  background: var(--reward);
+}
+
+.step-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  color: var(--on-action);
+}
+
+.mission-steps li.is-on .step-node {
+  background: var(--reward);
+  border-color: var(--reward);
+  animation: node-pop 0.45s var(--ease);
+}
+
+.mission-steps li.is-on .step-label {
+  color: var(--reward-ink);
+  font-weight: 700;
+}
+
+@keyframes node-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+}
+
+.mission-new {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.mission-new:hover {
+  border-color: var(--line-strong);
+}
+
+/* ---------- Savings chip on shop rows ---------- */
+
+.saving-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--reward-soft);
+  color: var(--reward-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+/* ---------- چینو ---------- */
+
+.mascot {
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.mascot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.mascot-idle .mascot-eyes,
+.mascot-think .mascot-eyes {
+  animation: blink 4.5s infinite;
+}
+
+@keyframes blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+
+.mascot-tag {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: tag-swing 3s ease-in-out infinite;
+}
+
+@keyframes tag-swing {
+  50% {
+    transform: rotate(-12deg);
+  }
+}
+
+.mascot-dots circle {
+  animation: think-dot 1.2s ease-in-out infinite;
+}
+
+.mascot-dots circle:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.mascot-dots circle:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes think-dot {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.mascot-cheer {
+  animation: hop 0.7s var(--ease) 2;
+}
+
+@keyframes hop {
+  40% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+}
+
+/* ---------- Medals & profile ---------- */
+
+.medal {
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--line-strong);
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 4px var(--line);
+}
+
+.medal.is-earned {
+  background: var(--reward);
+  color: var(--on-action);
+  box-shadow:
+    0 0 0 3px var(--surface),
+    0 0 0 5px var(--reward);
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profile-hero > div {
+  flex: 1;
+}
+
+.profile-level {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.xp-bar {
+  height: 10px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--reward-soft);
+  overflow: hidden;
+}
+
+.xp-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--reward);
+  transform-origin: right; /* fills from the reading start in RTL */
+  transition: transform 0.6s var(--ease);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 18px 0 6px;
+}
+
+.stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stat-num.reward {
+  color: var(--reward-ink);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile .card-title {
+  margin-top: 18px;
+}
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badges li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.badge-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.badges li.is-earned .badge-name {
+  color: var(--ink);
+}
+
+.badge-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-note,
+  .question-card {
+    animation: fade-in 0.2s linear;
+  }
+}

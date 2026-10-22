@@ -1,0 +1,853 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T00:00:00Z",
+  "title": "Design System: ترب‌چین",
+  "extensions": {
+    "colorMeta": {
+      "action": {
+        "role": "primary",
+        "displayName": "Torob Red",
+        "canonical": "#ef4056",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ],
+        "dark": "#ef4056"
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Pressed Red",
+        "canonical": "#d92e44",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ],
+        "dark": "#f26a7d"
+      },
+      "action-soft": {
+        "role": "primary",
+        "displayName": "Red Wash",
+        "canonical": "#fef2f3",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ],
+        "dark": "rgb(239 64 86 / 0.15)"
+      },
+      "action-ink": {
+        "role": "primary",
+        "displayName": "Red Ink",
+        "canonical": "#b51f33",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ],
+        "dark": "#f79aa6"
+      },
+      "on-action": {
+        "role": "primary",
+        "displayName": "On Red",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#ffffff"
+      },
+      "reward": {
+        "role": "secondary",
+        "displayName": "Saffron",
+        "canonical": "#f5a400",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#c78300",
+          "#f5a400",
+          "#ffc552",
+          "#ffe3a3",
+          "#fff4d6"
+        ],
+        "dark": "#f5a400"
+      },
+      "reward-ink": {
+        "role": "secondary",
+        "displayName": "Saffron Ink",
+        "canonical": "#8a5a00",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#c78300",
+          "#f5a400",
+          "#ffc552",
+          "#ffe3a3",
+          "#fff4d6"
+        ],
+        "dark": "#ffc552"
+      },
+      "reward-soft": {
+        "role": "secondary",
+        "displayName": "Saffron Wash",
+        "canonical": "#fff4d6",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#c78300",
+          "#f5a400",
+          "#ffc552",
+          "#ffe3a3",
+          "#fff4d6"
+        ],
+        "dark": "rgb(245 164 0 / 0.14)"
+      },
+      "open": {
+        "role": "tertiary",
+        "displayName": "Open Green",
+        "canonical": "#059669",
+        "tonalRamp": [
+          "#022c22",
+          "#064e3b",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#6ee7b7",
+          "#a7f3d0",
+          "#ecfdf5"
+        ],
+        "dark": "#6ee7b7"
+      },
+      "soon": {
+        "role": "tertiary",
+        "displayName": "Closing Amber",
+        "canonical": "#b45309",
+        "tonalRamp": [
+          "#3b1a03",
+          "#6b3006",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ],
+        "dark": "#fbbf24"
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Doubt Amber",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "#3b1a03",
+          "#6b3006",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ],
+        "dark": "#fde68a"
+      },
+      "warn-soft": {
+        "role": "tertiary",
+        "displayName": "Doubt Wash",
+        "canonical": "#fffbeb",
+        "tonalRamp": [
+          "#3b1a03",
+          "#6b3006",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ],
+        "dark": "rgb(245 158 11 / 0.12)"
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "#b91c1c",
+        "tonalRamp": [
+          "#3f0909",
+          "#6f1313",
+          "#991b1b",
+          "#b91c1c",
+          "#dc4a4a",
+          "#fca5a5",
+          "#fde0e3",
+          "#fef2f3"
+        ],
+        "dark": "#fca5a5"
+      },
+      "danger-soft": {
+        "role": "tertiary",
+        "displayName": "Alert Wash",
+        "canonical": "#fef2f3",
+        "tonalRamp": [
+          "#3f0909",
+          "#6f1313",
+          "#991b1b",
+          "#b91c1c",
+          "#dc4a4a",
+          "#fca5a5",
+          "#fde0e3",
+          "#fef2f3"
+        ],
+        "dark": "rgb(239 64 86 / 0.12)"
+      },
+      "danger-line": {
+        "role": "tertiary",
+        "displayName": "Alert Line",
+        "canonical": "#fde0e3",
+        "tonalRamp": [
+          "#3f0909",
+          "#6f1313",
+          "#991b1b",
+          "#b91c1c",
+          "#dc4a4a",
+          "#fca5a5",
+          "#fde0e3",
+          "#fef2f3"
+        ],
+        "dark": "rgb(239 64 86 / 0.3)"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#0f1117"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#f8f9fb",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#15181f"
+      },
+      "elevated": {
+        "role": "neutral",
+        "displayName": "Elevated",
+        "canonical": "#f1f3f6",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#1e222b"
+      },
+      "user-message": {
+        "role": "neutral",
+        "displayName": "User Bubble",
+        "canonical": "#e6e8ec",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#343a46"
+      },
+      "user-message-line": {
+        "role": "neutral",
+        "displayName": "Bubble Line",
+        "canonical": "#d1d5db",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#4a535f"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#ececf1"
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#374151",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#c9ccd4"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#6b7280",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#9aa0ac"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e6e8ec",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#2a2e38"
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#d1d5db",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ],
+        "dark": "#3a404c"
+      },
+      "canvas-dark": {
+        "role": "neutral",
+        "displayName": "Canvas (dark)",
+        "canonical": "#0f1117",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Surface (dark)",
+        "canonical": "#15181f",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "elevated-dark": {
+        "role": "neutral",
+        "displayName": "Elevated (dark)",
+        "canonical": "#1e222b",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "user-message-dark": {
+        "role": "neutral",
+        "displayName": "User Bubble (dark)",
+        "canonical": "#343a46",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "canonical": "#ececf1",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Graphite (dark)",
+        "canonical": "#c9ccd4",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted (dark)",
+        "canonical": "#9aa0ac",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#2a2e38",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "line-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Hairline (dark)",
+        "canonical": "#3a404c",
+        "tonalRamp": [
+          "#0f1117",
+          "#15181f",
+          "#1e222b",
+          "#2a2e38",
+          "#6b7280",
+          "#c9ccd4",
+          "#e6e8ec",
+          "#ffffff"
+        ]
+      },
+      "action-hover-dark": {
+        "role": "primary",
+        "displayName": "Pressed Red (dark)",
+        "canonical": "#f26a7d",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ]
+      },
+      "action-ink-dark": {
+        "role": "primary",
+        "displayName": "Red Ink (dark)",
+        "canonical": "#f79aa6",
+        "tonalRamp": [
+          "#4a0a14",
+          "#7d1222",
+          "#b51f33",
+          "#d92e44",
+          "#ef4056",
+          "#f26a7d",
+          "#f79aa6",
+          "#fef2f3"
+        ]
+      },
+      "reward-ink-dark": {
+        "role": "secondary",
+        "displayName": "Saffron Ink (dark)",
+        "canonical": "#ffc552",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#c78300",
+          "#f5a400",
+          "#ffc552",
+          "#ffe3a3",
+          "#fff4d6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The welcome question only; 20px under 720px."
+      },
+      "sheet-title": {
+        "displayName": "Sheet Title",
+        "purpose": "Sheet headers."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Shop and product names in rows."
+      },
+      "price": {
+        "displayName": "Price",
+        "purpose": "Row price, nowrap, tabular, with a 12px muted unit."
+      },
+      "answer": {
+        "displayName": "Answer",
+        "purpose": "The assistant's answer in the thread, in ink, no bubble."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base text and the user bubble."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, pills, meta lines."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Units, price age, tags, the data note, the steps pill."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Dock disclaimer, saving chips, mission step labels."
+      }
+    },
+    "themes": {
+      "mechanism": "Light tokens on :root; dark overrides under @media (prefers-color-scheme: dark) on :root:not([data-theme='light']), same names. Map tiles switch CARTO light_all / dark_all. theme-color meta #ffffff / #0f1117."
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 10px 28px rgb(17 24 39 / 0.14)",
+        "dark": "0 10px 28px rgb(0 0 0 / 0.45)",
+        "purpose": "Map price pins and toasts only."
+      },
+      {
+        "name": "medal-ring",
+        "value": "0 0 0 3px var(--surface), 0 0 0 4px var(--line)",
+        "purpose": "Locked medal outline; earned uses 0 0 0 5px var(--reward)."
+      },
+      {
+        "name": "sheet-backdrop",
+        "value": "rgb(17 24 39 / 0.42)",
+        "dark": "rgb(0 0 0 / 0.55)",
+        "purpose": "Dimmed backdrop behind modal sheets."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "House ease: sheets, toasts, level ring, XP bar, mission pops."
+      },
+      {
+        "name": "state-change",
+        "value": "0.15s",
+        "purpose": "Border, background and color transitions on buttons, chips, rows, rail."
+      },
+      {
+        "name": "sheet-up",
+        "value": "0.32s translateY(40px) to 0, opacity 0.4 to 1",
+        "purpose": "Sheet entry."
+      },
+      {
+        "name": "toast-in",
+        "value": "0.42s translateY(16px) scale(0.96) to rest",
+        "purpose": "Toast entry; a 0.2s fade under reduced motion."
+      },
+      {
+        "name": "progress-fill",
+        "value": "0.6s",
+        "purpose": "Level ring and XP bar fills."
+      },
+      {
+        "name": "tag-burst",
+        "value": "1.1s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Price-tag burst on big wins; hidden under reduced motion."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "durations 0.01ms",
+        "purpose": "All animation and transition collapse under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "max-width: 720px (rail becomes top bar)"
+      },
+      {
+        "name": "sheet-centred",
+        "value": "min-width: 680px"
+      },
+      {
+        "name": "column",
+        "value": "760px max content width"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "The one input: a pill with a red round send button.",
+      "html": "<form class=\"ds-root ds-composer\" dir=\"rtl\"><textarea rows=\"1\" placeholder=\"چی می‌خوای بخری؟\"></textarea><button type=\"button\" class=\"ds-send\" aria-label=\"بفرست\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5\"/><path d=\"m6 11 6-6 6 6\"/></svg></button></form>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-composer { display:flex; align-items:flex-end; gap:8px; padding:8px; padding-inline-start:18px; background:var(--surface); border:1px solid var(--line); border-radius:28px; font-family: 'IRANYekanX', Tahoma, sans-serif; transition:border-color .15s; } .ds-composer:focus-within { border-color:var(--line-strong); } .ds-composer textarea { flex:1; min-width:0; min-height:40px; padding:8px 0; background:transparent; border:0; resize:none; font:inherit; font-size:15px; line-height:1.6; color:var(--ink); caret-color:var(--action); } .ds-composer textarea:focus { outline:none; } .ds-composer textarea::placeholder { color:var(--muted); } .ds-send { display:grid; place-items:center; width:40px; height:40px; border:0; border-radius:50%; background:var(--action); color:var(--on-action); cursor:pointer; transition:background-color .15s; } .ds-send:hover { background:var(--action-hover); } .ds-send:focus-visible { outline:2px solid var(--action); outline-offset:2px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The filled action; red is reserved for pressable things.",
+      "html": "<button class=\"ds-root ds-btn ds-btn-primary\">مسیر رفتن</button>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 16px; border:0; border-radius:12px; font-family: 'IRANYekanX', Tahoma, sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background-color .15s, border-color .15s; } .ds-btn-primary { background:var(--action); color:var(--on-action); } .ds-btn-primary:hover { background:var(--action-hover); } .ds-btn:focus-visible { outline:2px solid var(--action); outline-offset:2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary actions: hairline outline, ink text.",
+      "html": "<button class=\"ds-root ds-btn-ghost\">مقایسه</button>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; background:transparent; border:1px solid var(--line); border-radius:12px; color:var(--ink); font-family: 'IRANYekanX', Tahoma, sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:background-color .15s, border-color .15s; } .ds-btn-ghost:hover { border-color:var(--line-strong); background:var(--bg); } .ds-btn-ghost:focus-visible { outline:2px solid var(--action); outline-offset:2px; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Pill filters; pressed takes Red Wash with red-ink text.",
+      "html": "<div class=\"ds-root\" dir=\"rtl\" style=\"display:flex;gap:8px\"><button class=\"ds-chip\" aria-pressed=\"true\">باز است</button><button class=\"ds-chip\" aria-pressed=\"false\">نزدیک‌ترین</button><button class=\"ds-chip ds-chip-clear\">پاک کردن</button></div>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-chip { display:inline-flex; align-items:center; min-height:36px; padding:0 14px; background:var(--surface); border:1px solid var(--line); border-radius:999px; color:var(--ink-2); font-family: 'IRANYekanX', Tahoma, sans-serif; font-size:13px; font-weight:500; white-space:nowrap; cursor:pointer; transition:border-color .15s, background-color .15s, color .15s; } .ds-chip:hover { border-color:var(--line-strong); } .ds-chip[aria-pressed='true'] { background:var(--action-soft); border-color:var(--action); color:var(--action-ink); } .ds-chip:focus-visible { outline:2px solid var(--action); outline-offset:2px; } .ds-chip-clear { border-style:dashed; color:var(--muted); }"
+    },
+    {
+      "name": "Thread Turn",
+      "kind": "custom",
+      "refersTo": "user-message",
+      "description": "User bubble, steps pill, plain-text answer on the canvas.",
+      "html": "<article class=\"ds-root ds-turn\" dir=\"rtl\"><p class=\"ds-user\">آیفون ۱۳ نزدیک ونک</p><span class=\"ds-steps\">۳ مغازه پیدا شد <b>جزئیات</b></span><p class=\"ds-answer\">ارزان‌ترین نزدیک شما <strong>۴۲٫۵ میلیون</strong> است، ۱٫۲ کیلومتر دورتر.</p></article>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-turn { padding:16px; background:var(--bg); color:var(--ink); font-family: 'IRANYekanX', Tahoma, sans-serif; } .ds-user { width:fit-content; max-width:82%; margin:0 0 14px; padding:10px 16px; background:var(--user-msg); border:1px solid var(--user-msg-line); border-radius:18px; font-size:15px; } .ds-steps { display:inline-flex; align-items:center; gap:8px; min-height:34px; padding:0 12px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font-size:12.5px; } .ds-steps b { color:var(--action-ink); font-weight:600; } .ds-answer { margin:10px 0 0; font-size:15px; line-height:1.95; } .ds-answer strong { font-weight:700; }"
+    },
+    {
+      "name": "Shop Row",
+      "kind": "custom",
+      "refersTo": "shop-row",
+      "description": "Name, place, open state, price, price age, saving chip, selection check.",
+      "html": "<ul class=\"ds-root ds-list\" dir=\"rtl\"><li class=\"ds-row\"><div class=\"ds-row-main\"><div class=\"ds-row-text\"><span class=\"ds-row-title\">موبایل آرش <span class=\"ds-tag\">ارزان‌ترین</span></span><span class=\"ds-row-sub\">پاساژ علاءالدین، طبقه ۲</span><span class=\"ds-status\">باز است</span></div><div class=\"ds-row-price\"><span class=\"ds-price\">۴۲٬۵۰۰٬۰۰۰</span><span class=\"ds-unit\">تومان</span><span class=\"ds-age is-stale\">۳ ماه پیش</span><span class=\"ds-saving\">۲ میلیون کمتر</span></div></div><button class=\"ds-select\" aria-label=\"انتخاب\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 5 5 9-10\"/></svg></button></li><li class=\"ds-row is-selected\"><div class=\"ds-row-main\"><div class=\"ds-row-text\"><span class=\"ds-row-title\">دیجی سنتر</span><span class=\"ds-row-sub\">خیابان جمهوری</span></div><div class=\"ds-row-price\"><span class=\"ds-price\">۴۳٬۱۰۰٬۰۰۰</span><span class=\"ds-unit\">تومان</span><span class=\"ds-age\">۲ روز پیش</span></div></div><button class=\"ds-select is-on\" aria-label=\"انتخاب\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 5 5 9-10\"/></svg></button></li></ul>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-list { list-style:none; margin:0; padding:0; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:clip; font-family: 'IRANYekanX', Tahoma, sans-serif; color:var(--ink); } .ds-row { display:flex; } .ds-row + .ds-row { border-top:1px solid var(--line); } .ds-row.is-selected { background:var(--action-soft); } .ds-row-main { flex:1; min-width:0; display:flex; align-items:center; gap:12px; min-height:64px; padding:12px 16px; transition:background-color .15s; } .ds-row:not(.is-selected) .ds-row-main:hover { background:var(--elevated); } .ds-row-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .ds-row-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; line-height:1.5; } .ds-row-sub { font-size:13px; color:var(--muted); } .ds-status { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-2); } .ds-status::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--open); } .ds-tag { padding:0 8px; border-radius:999px; background:var(--action-soft); color:var(--action-ink); font-size:12px; font-weight:600; line-height:22px; } .ds-row-price { display:flex; flex-direction:column; align-items:flex-end; line-height:1.3; } .ds-price { font-size:17px; font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; } .ds-unit { font-size:12px; color:var(--muted); } .ds-age { margin-top:4px; font-size:12px; color:var(--muted); } .ds-age.is-stale { color:var(--warn); } .ds-saving { margin-top:4px; padding:0 7px; border-radius:999px; background:var(--reward-soft); color:var(--reward-ink); font-size:11.5px; font-weight:700; line-height:22px; } .ds-select { display:grid; place-items:center; width:52px; background:none; border:0; color:transparent; cursor:pointer; } .ds-select svg { width:26px; height:26px; padding:4px; border:1.5px solid var(--line-strong); border-radius:999px; } .ds-select:hover svg { border-color:var(--action); } .ds-select.is-on { color:var(--on-action); } .ds-select.is-on svg { background:var(--action); border-color:var(--action); }"
+    },
+    {
+      "name": "Data Note",
+      "kind": "custom",
+      "refersTo": "data-note",
+      "description": "One caveat band per list; rows never repeat it.",
+      "html": "<p class=\"ds-root ds-data-note\" dir=\"rtl\">قیمت‌ها همان قیمت ثبت‌شده در ترب‌اند؛ موجودی تأیید نشده، مگر مغازه جواب داده باشد.</p>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-data-note { margin:0; padding:10px 16px; background:var(--bg); border-block:1px solid var(--line); font-family: 'IRANYekanX', Tahoma, sans-serif; font-size:12.5px; color:var(--muted); }"
+    },
+    {
+      "name": "Mission Bar",
+      "kind": "custom",
+      "refersTo": "saving-chip",
+      "description": "Saffron step track; saffron appears only on wins.",
+      "html": "<div class=\"ds-root ds-mission\" dir=\"rtl\"><p class=\"ds-mission-title\">ماموریت: ارزان‌ترین را پیدا کن</p><ol class=\"ds-steps-track\"><li class=\"is-on\"><span class=\"ds-node\"></span>جست‌وجو</li><li class=\"is-on\"><span class=\"ds-node\"></span>مقایسه</li><li><span class=\"ds-node\"></span>مسیر</li></ol></div>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-mission { padding:8px 16px; background:var(--bg); border-bottom:1px solid var(--line); color:var(--ink); font-family: 'IRANYekanX', Tahoma, sans-serif; } .ds-mission-title { margin:0; font-size:13px; font-weight:800; } .ds-steps-track { display:flex; margin:6px 0 0; padding:0; list-style:none; } .ds-steps-track li { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; color:var(--muted); } .ds-steps-track li:not(:last-child)::before { content:''; position:absolute; top:9px; inset-inline-start:50%; width:100%; height:3px; border-radius:2px; background:var(--line); } .ds-steps-track li.is-on:not(:last-child)::before { background:var(--reward); } .ds-node { position:relative; z-index:1; width:20px; height:20px; border-radius:50%; background:var(--surface); border:2px solid var(--line-strong); box-sizing:border-box; } .ds-steps-track li.is-on .ds-node { background:var(--reward); border-color:var(--reward); } .ds-steps-track li.is-on { color:var(--reward-ink); font-weight:700; }"
+    },
+    {
+      "name": "Bottom Sheet",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Agent questions open here as blocking sheets.",
+      "html": "<div class=\"ds-root ds-sheet\" dir=\"rtl\"><div class=\"ds-grip\"></div><header class=\"ds-sheet-head\"><h2>کجا خرید می‌کنید؟</h2></header><div class=\"ds-sheet-content\">...</div></div>",
+      "css": ":host, .ds-root { --bg:#0f1117; --surface:#15181f; --elevated:#1e222b; --user-msg:#343a46; --user-msg-line:#4a535f; --ink:#ececf1; --ink-2:#c9ccd4; --muted:#9aa0ac; --line:#2a2e38; --line-strong:#3a404c; --action:#ef4056; --action-hover:#f26a7d; --action-soft:rgb(239 64 86 / 0.15); --action-ink:#f79aa6; --on-action:#fff; --reward:#f5a400; --reward-ink:#ffc552; --reward-soft:rgb(245 164 0 / 0.14); --warn:#fde68a; --open:#6ee7b7; } .ds-sheet { max-width:640px; background:var(--surface); color:var(--ink); border-radius:20px 20px 0 0; font-family: 'IRANYekanX', Tahoma, sans-serif; animation:ds-sheet-up .32s cubic-bezier(0.22, 1, 0.36, 1); } .ds-grip { width:36px; height:4px; margin:8px auto 0; border-radius:2px; background:var(--line-strong); } .ds-sheet-head { padding:8px 16px; } .ds-sheet-head h2 { margin:0; font-size:17px; font-weight:800; line-height:1.5; } .ds-sheet-content { padding:4px 16px 20px; } @keyframes ds-sheet-up { from { transform:translateY(40px); opacity:.4; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Room",
+    "overview": "Shopping as a conversation in TorobChat's dark, quiet room. The page is a near-black canvas (or a white one, when the system is light) with a thin icon rail on the reading-start edge, a centred 760px column, and a pill composer docked at the bottom. The user's words sit in a soft gray bubble; the assistant's answer is plain text on the canvas, and its product and shop cards are the substance of the page. Chrome recedes: the top bar holds only the conversation title and a place pill, and the agent's working steps collapse into one small pill.\n\nTokens follow TorobChat's own names (canvas, surface, elevated, user-message, line), and light and dark follow `prefers-color-scheme` under the same names. Color stays rare. Soft off-white ink (dark) or near-black ink (light) does the reading, hairlines separate everything, Torob red (#ef4056) shows up only on things you press or that are selected, and saffron only on wins. The game layer (missions, levels, badges, savings) and the pixel-art mascot چینو sit in the same room without raising its voice.\n\nPhone-first, Persian and RTL, tabular Persian digits throughout. Under 720px the rail becomes the top bar.",
+    "keyCharacteristics": [
+      "Near-black canvas (#0f1117) with surface cards (#15181f) and hairlines (#2a2e38) in dark; white / #f8f9fb / #e6e8ec in light.",
+      "One brand red for press and selection; saffron for wins; nothing else is colored except state.",
+      "IRANYekanX variable font in five weight steps (400 / 500 / 600 / 700 / 800).",
+      "Chat layout: icon rail, centred column, user bubble, plain-text answer, pill composer in a fading dock.",
+      "Honesty is visual: listed price, price age and stock are always separate; one data note per list.",
+      "Agent questions open as blocking sheets."
+    ],
+    "rules": [
+      {
+        "name": "The Press-Only Red Rule",
+        "body": "Torob red appears only on things you can press or that are selected. If it can't be tapped and isn't the current selection, it is ink, gray, a state color or saffron.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Ink Rule",
+        "body": "Red text uses action-ink, never action. Action is a fill color; on text it fails contrast.",
+        "section": "colors"
+      },
+      {
+        "name": "The Saffron Is a Win Rule",
+        "body": "Saffron marks a win: a mission step done, a saving, a badge, a level. It never marks an action, a price level or a warning.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Best Rule",
+        "body": "In comparisons the winning value is bold ink (800) with a small check, never colored. Ties are never marked.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Step Rule",
+        "body": "Hierarchy comes from the fixed weight steps (400 body, 500 labels, 600 buttons, 700 titles, 800 display, prices, win titles). No new families, no italics, no uppercase or tracking tricks.",
+        "section": "typography"
+      },
+      {
+        "name": "The Persian Digits Rule",
+        "body": "Every number is rendered with Persian digits and tabular figures.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Composer Rule",
+        "body": "There is exactly one text input for search and conversation: the pill composer, centred on the welcome screen and docked at the bottom afterwards. Other inputs (budget, follow-up answers) are small fields inside cards or sheets.",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline Not Shadow Rule",
+        "body": "Cards, rows and the composer separate with 1px hairlines and a tonal step. A card never gets a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep Torob red on pressable or selected things only: send, primary buttons, selected chips, checks, picked pins, focus rings.",
+      "Do write red text in action-ink (#b51f33 light, #f79aa6 dark) and keep action (#ef4056) for fills.",
+      "Do keep saffron for wins only: missions, savings, badges, levels.",
+      "Do mark the best compare value with bold ink and a check, and leave ties unmarked.",
+      "Do show listed price, price age and stock as separate facts; color a stale price age amber and write unknowns as \"نامشخص\" and unconfirmed stock as \"تأیید نشده\".",
+      "Do put one data note per list instead of repeating caveats on each row.",
+      "Do open agent questions as blocking sheets.",
+      "Do cluster map pins by on-screen distance, and switch map tiles with the color scheme.",
+      "Do define every new color in both the light `:root` and the dark `prefers-color-scheme` block under the same token name.",
+      "Do use Persian, tabular digits and logical (inline-start/end) spacing everywhere."
+    ],
+    "donts": [
+      "Don't put shadows on cards, rows or the composer; the Float shadow is for pins and toasts.",
+      "Don't use red to emphasize, rank or decorate non-interactive content, and don't set text in the raw action red.",
+      "Don't use saffron for actions, warnings or price levels.",
+      "Don't add a second text input for search or chat outside the composer.",
+      "Don't merge price, price age and stock into one claim, or imply stock is confirmed when the shop hasn't answered.",
+      "Don't wrap the assistant's answer in a bubble; only the user's message gets one.",
+      "Don't introduce another type family or weight steps beyond 400/500/600/700/800."
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "app": "torobchin",
+  "platform": "docker",
+  "port": 3000,
+  "build": {
+    "dockerfile": "./Dockerfile"
+  },
+  "docker": {
+    "timezone": "Asia/Tehran"
+  },
+  "disks": [
+    {
+      "name": "storage",
+      "mountTo": "/app/storage"
+    }
+  ]
+}

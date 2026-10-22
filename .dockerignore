@@ -1,0 +1,9 @@
+node_modules
+web/node_modules
+public
+data
+.env
+.git
+.impeccable
+*.log
+starcoach-dataset-v16-cap300-csv.zip

@@ -1,0 +1,29 @@
+{
+  "name": "torob-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI assistant for in-person shopping using Torob's physical-store data",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "dev": "node --watch --env-file=.env src/server.js",
+    "web:install": "npm --prefix web install",
+    "web:dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "db:build": "node scripts/build-db.js",
+    "test": "node --test \"test/*.test.js\"",
+    "eval": "node --env-file=.env evals/run.js"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.20",
+    "@langchain/langgraph": "^1.5.1",
+    "@langchain/langgraph-checkpoint-sqlite": "^1.1.0",
+    "@langchain/openai": "^1.6.3",
+    "better-sqlite3": "^13.0.3",
+    "csv-parse": "^7.0.3",
+    "zod": "^4.6.7"
+  }
+}
