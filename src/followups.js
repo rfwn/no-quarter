@@ -32,7 +32,7 @@ db.exec(`
 `);
 
 const DAY = 86_400_000;
-const row = (r) => (r ? { ...r, shop_name: getShop(r.shop_id)?.name || null, extracted: r.extracted ? JSON.parse(r.extracted) : null } : null);
+const row = (r) => (r ? { ...r, shop_name: getShop(r.shop_id)?.name || null, phone: getShop(r.shop_id)?.phone || null, extracted: r.extracted ? JSON.parse(r.extracted) : null } : null);
 
 /** In the user's own voice — they send it. */
 export function outreachMessage(productTitle) {

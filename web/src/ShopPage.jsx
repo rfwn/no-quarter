@@ -2,7 +2,7 @@
 // Rendered inline when the agent calls show_shop, and in a sheet when any shop name is tapped.
 import { useEffect, useRef, useState } from 'react';
 import { fetchShop } from './api.js';
-import { cleanTitle, formatKm, neshanHref, openState, priceAge, shortToman, telHref, toFaDigits } from './format.js';
+import { cleanTitle, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, LinkIcon, PhoneIcon, RouteIcon, SearchIcon } from './Icons.jsx';
 import { Src } from './Source.jsx';
 import ShopMap from './ShopMap.jsx';
@@ -57,7 +57,7 @@ export default function ShopPage({ shop: initial, shopId, threadId, ctx, onAsk, 
   if (!shop) return <p className="muted">{error || 'در حال باز کردن صفحه‌ی مغازه…'}</p>;
 
   const open = openState(shop.open);
-  const pay = [shop.torobpay_in_person && 'ترب‌پی حضوری', ...(shop.installments || []).map((p) => `اقساط ${p}`)].filter(Boolean);
+  const pay = paymentText(shop);
   const where = shop.passage ? `${shop.passage}${shop.floor_unit ? `، ${shop.floor_unit}` : ''}` : shop.area;
   const week = shop.week ? groupWeek(shop.week) : null; // already Saturday → Friday
 
@@ -132,8 +132,8 @@ export default function ShopPage({ shop: initial, shopId, threadId, ctx, onAsk, 
         <div>
           <dt>پرداخت</dt>
           <dd>
-            {pay.length ? pay.join('، ') : <span className="muted">چیزی اعلام نشده</span>}
-            {pay.length > 0 && <Src kind="seller" />}
+            {pay || <span className="muted">چیزی اعلام نشده</span>}
+            {pay && <Src kind="seller" />}
           </dd>
         </div>
         {shop.fast_delivery && (

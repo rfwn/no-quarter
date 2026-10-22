@@ -11,6 +11,7 @@ import { useVoice, voiceSupported } from './voice.js';
 import Drawer from './Drawer.jsx';
 import LocationPicker from './Location.jsx';
 import ShopPage from './ShopPage.jsx';
+import Nudges from './Nudges.jsx';
 import { onOpenShop } from './shopSheet.js';
 import { LevelChip, MissionBar, Profile, RewardNote, ThemeSwitch, rewardFor } from './GameUI.jsx';
 import { clearMission, record, startBasket, subscribe } from './game.js';
@@ -357,6 +358,7 @@ export default function App() {
               ))}
             </main>
             <div className="dock">
+              <Nudges threadId={threadId} turns={turns} onAsk={ask} busy={busy} />
               {composer}
               <p className="disclaimer">ترب‌چین ممکنه اشتباه کنه. قیمت‌ها ثبت‌شده‌ان؛ قبل از رفتن بپرس.</p>
             </div>

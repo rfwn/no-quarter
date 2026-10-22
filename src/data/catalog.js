@@ -84,6 +84,14 @@ for (const r of db.prepare('SELECT * FROM shops').all()) {
     offer_count: r.offer_count,
     torobpay_in_person: payment.some((p) => p.provider_name === 'ترب‌پی' && p.channel === 'in_person'),
     installments: [...new Set(payment.filter((p) => INSTALLMENT_PROVIDERS.includes(p.provider_name)).map((p) => p.provider_name))],
+    // The seller's declared payment options and HOW they're accepted: in person, or not stated
+    // (could be online only). The brief asks for the type of information to be clear.
+    payment_methods: [...payment.reduce((m, p) => {
+      if (!p.provider_name) return m;
+      const cur = m.get(p.provider_name);
+      m.set(p.provider_name, cur === true || p.channel === 'in_person');
+      return m;
+    }, new Map())].map(([provider, inPerson]) => ({ provider, in_person: inPerson })),
     passage: (r.address || '').match(/(پاساژ|مجتمع|بازار|مرکز خرید|ساختمان)\s+[^،,]+/)?.[0] || null,
     floor_unit: (r.address || '').match(/(طبقه\s+[^،,]+)(?:[،,]\s*)?(واحد\s+[^،,]+|پلاک\s+[^،,]+)?/)?.slice(1).filter(Boolean).join('، ') || null,
   });
@@ -304,6 +312,7 @@ function toOffer(o, origin, at, category = null) {
     open: openStatus(s.hours, at),
     torobpay_in_person: s.torobpay_in_person,
     installments: s.installments,
+    payment_methods: s.payment_methods,
     fast_delivery: s.fast_delivery,
     has_instagram: !!s.instagram,
     has_website: !!s.website,
@@ -515,6 +524,7 @@ export function shopProfile(shopId) {
     open: openStatus(s.hours),
     torobpay_in_person: s.torobpay_in_person,
     installments: s.installments,
+    payment_methods: s.payment_methods,
     fast_delivery: s.fast_delivery,
     categories: s.categories.slice(0, 8),
   };

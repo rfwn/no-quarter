@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { fetchShop, refilterOffers } from './api.js';
-import { cleanTitle, faDate, formatKm, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
+import { cleanTitle, faDate, formatKm, paymentText, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, CheckIcon, ChevronIcon, InfoIcon, MapIcon, PhoneIcon, RouteIcon, TagIcon } from './Icons.jsx';
 import ShopMap, { MapPeek, focusRow, offerPoints } from './ShopMap.jsx';
 import { openShop } from './shopSheet.js';
@@ -281,7 +281,7 @@ function OfferRow({ focused, offer: o, threadId, listingLabel, belowMedian, pick
   const [error, setError] = useState('');
   const open = openState(o.open);
   const stale = o.price_freshness === 'stale' || o.price_freshness === 'unknown';
-  const payText = [o.torobpay_in_person && 'ترب‌پی حضوری', ...(o.installments || []).map((p) => `اقساط ${p}`)].filter(Boolean).join('، ');
+  const payText = paymentText(o);
 
   async function loadShop() {
     if (shop || state === 'loading') return shop;

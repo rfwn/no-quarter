@@ -2,8 +2,8 @@
 // Unknown types render nothing — the agent can't inject arbitrary UI.
 import { useEffect, useRef, useState } from 'react';
 import { ProductList, ShopList } from './Directory.jsx';
-import { markShopAsked, reportShopAnswer } from './api.js';
-import { clockFa, formatKm, neshanHref, openState, priceAge, shortToman, telHref, toFaDigits } from './format.js';
+import { fetchFollowups, markShopAsked, reportShopAnswer } from './api.js';
+import { clockFa, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { BackIcon, ChatIcon, CheckIcon, LinkIcon, LocateIcon, MapIcon, PhoneIcon, RouteIcon } from './Icons.jsx';
 import ShopMap, { MapPeek, focusRow, offerPoints, ownControl } from './ShopMap.jsx';
 import Sheet from './Sheet.jsx';
@@ -208,14 +208,14 @@ function Compare({ block, ctx, onAsk, busy }) {
           const open = openState(o.open);
           const stale = o.price_age_days != null && o.price_age_days > 14;
           const a = answers[o.offer_id];
-          const pay = [o.torobpay_in_person && 'ترب‌پی', ...(o.installments || [])].filter(Boolean);
+          const pay = paymentText(o);
           const facts = [
             ['رفتن', o.distance_km != null ? `${formatKm(o.distance_km)}، ${travel(o.distance_km)}` : 'فاصله نامعلوم'],
             ['ساعت کاری', open.text, `status status-${open.tone}`],
             ['قیمت', `${priceAge(o.price_age_days)}${stale ? ' — بهتره قبلش بپرسی' : ''}`, stale ? 'is-stale' : '', 'torob'],
             ['موجودی', a ? null : 'معلوم نیست', '', 'unverified'],
             ['گارانتی', o.warranty_kind?.label || warrantyText(o.warranty), o.warranty_kind && ['test_only', 'none'].includes(o.warranty_kind.kind) ? 'is-stale' : '', o.warranty_kind?.kind === 'unknown' ? null : 'seller'],
-            ['پرداخت', pay.join('، ') || null, '', 'seller'],
+            ['پرداخت', pay || null, '', 'seller'],
             ['جواب مغازه', a ? answerText(a) : null, '', 'you'],
           ].filter(([, v]) => v);
           return (
@@ -457,6 +457,20 @@ function Followup({ block, threadId, onAsk, busy }) {
   const [now, setNow] = useState(Date.now());
   const channels = f.channels || [];
 
+  // A card restored from history carries the status it had when created: fetch the live one.
+  useEffect(() => {
+    let alive = true;
+    fetchFollowups(threadId)
+      .then((all) => {
+        const live = all.find((x) => x.id === block.followup_id);
+        if (alive && live) setF((cur) => ({ ...cur, status: live.status, reply: live.reply, extracted: live.extracted, updated_at: live.updated_at }));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [threadId, block.followup_id]);
+
   useEffect(() => {
     if (f.status !== 'waiting') return;
     const t = setInterval(() => setNow(Date.now()), 60_000);
@@ -502,7 +516,7 @@ function Followup({ block, threadId, onAsk, busy }) {
   const STATUS = { prepared: 'پیامش آماده‌ست', waiting: 'منتظر جواب', answered: 'جواب داد' };
 
   return (
-    <section className={`card followup status-${f.status}`} aria-label={`پیگیری از ${f.shop_name}`} aria-live="polite">
+    <section id={`followup-${f.followup_id}`} className={`card followup status-${f.status}`} aria-label={`پیگیری از ${f.shop_name}`} aria-live="polite">
       <header className="card-head">
         <div>
           <h3 className="card-title">بپرس از {f.shop_name}</h3>

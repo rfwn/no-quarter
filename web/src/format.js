@@ -67,3 +67,10 @@ export function faDate(iso) {
     return null;
   }
 }
+
+/** Declared payment options with how they're accepted: «اسنپ‌پی (حضوری)»، «تارا (نوع پذیرش نامعلوم)». */
+export function paymentText(o) {
+  const methods = o?.payment_methods;
+  if (methods?.length) return methods.map((p) => `${p.provider} (${p.in_person ? 'حضوری' : 'نوع پذیرش نامعلوم'})`).join('، ');
+  return [o?.torobpay_in_person && 'ترب‌پی (حضوری)', ...(o?.installments || [])].filter(Boolean).join('، ');
+}
