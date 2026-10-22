@@ -238,7 +238,7 @@ function mentionedIn(said, product) {
   return words.slice(0, 4).some((w) => said.includes(w));
 }
 
-function contractViolations(text, turn, state) {
+export function contractViolations(text, turn, state) {
   const v = [];
   const tail = text.split('\n').filter(Boolean).slice(-2).join(' ');
   const showedSomething = state.ui.length > 0;

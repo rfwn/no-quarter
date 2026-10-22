@@ -10,6 +10,8 @@ It follows four steps:
 
 Everything is done with cards, filters and buttons rather than chat alone. Every fact is labelled with its source: «ثبت‌شده در ترب», «به اعلام فروشنده», «تأیید نشده», «به گفته‌ی خودت».
 
+**For judges:** [SUBMISSION.md](SUBMISSION.md) · [demo script](docs/demo.md) · [architecture](docs/architecture.md) · [data and its limits](docs/data.md) · [evaluation (18/18)](docs/evaluation.md)
+
 ## Run locally
 
 ```bash
@@ -22,7 +24,7 @@ npm start                         # http://localhost:3000
 
 | Command | What |
 |---|---|
-| `npm test` | Unit tests: grounding, privacy, policy, history, catalogue, hours, shopping-list planner |
+| `npm test` | 43 unit tests: governance, catalogue, places and time, buying know-how, product types, harness rules, shopping-list planner |
 | `npm run eval` | Behavioural evals: 18 scenarios through the real agent (search, location, compare, follow-up, out of stock, shop page, model comparison, price-tag photo, bargaining, glossary, shopping list, scope, prompt injection) |
 | `npm run eval -- shop-page model-compare` | Run selected scenarios by id |
 | `/admin?token=$ADMIN_TOKEN` | Trace viewer (per-turn spans, latency, tokens, flags) and audit log |
