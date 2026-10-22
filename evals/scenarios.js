@@ -129,6 +129,69 @@ export const SCENARIOS = [
       [!final.flags.includes('unverified_numbers'), 'no unverified numbers in the reply'],
     ],
   },
+  // ---- shop page, model comparison, photo ----
+  {
+    id: 'shop-page',
+    about: 'One shop: «X چی داره؟» opens its page (what it lists, hours, channels)',
+    turns: [{ message: '«نیان آریلا» چی داره؟', ctx: JOMHOURI }],
+    maxMs: 60_000,
+    check: ({ seen }) => [[seen.includes('shop_profile'), 'rendered the shop page']],
+  },
+  {
+    id: 'model-compare',
+    about: 'Step 1 — "X or Y?" between models: a side-by-side spec card of their type',
+    turns: [{ message: 'آیفون ۱۳ بهتره یا گلکسی A57؟', ctx: JOMHOURI }],
+    autoResume: { ask_user: { value: '0' } },
+    maxMs: 60_000,
+    check: ({ seen }) => [[seen.includes('product_compare'), 'rendered a model comparison']],
+  },
+  {
+    id: 'price-tag-photo',
+    about: 'In a shop: a photo of a price tag → the product is found and the price judged',
+    turns: [{ message: '', image: 'fixtures/price-tag.jpg', ctx: JOMHOURI }],
+    autoResume: { ask_user: { value: '0' } },
+    maxMs: 60_000,
+    check: ({ tools, seen }) => [
+      [tools.includes('search_products'), 'looked the product up'],
+      [seen.includes('price_verdict'), 'judged the price on the tag'],
+    ],
+  },
+  {
+    id: 'shopping-list',
+    about: 'Several items for one trip → one-shop / one-passage / cheapest-mix options',
+    turns: [{ message: 'یه گوشی سامسونگ A17 4G 128 رم 4، یه قاب براش و یه شارژر ۲۵ وات سامسونگ می‌خوام', ctx: JOMHOURI }],
+    autoResume: { ask_user: { value: '0' } },
+    maxMs: 60_000,
+    check: ({ tools, seen }) => [
+      [tools.includes('plan_list'), 'planned the list'],
+      [seen.includes('shopping_list'), 'rendered the list options'],
+    ],
+  },
+  // ---- buying know-how ----
+  {
+    id: 'bargain',
+    about: 'In a shop with a high quote: price verdict with a bargaining range (aim / fair / walk away)',
+    turns: [{ message: 'اینجا آیفون ۱۳ دو سیم استوک ۱۲۸ رو ۱۲۵ میلیون می‌دن، منصفانه‌ست؟', ctx: JOMHOURI }],
+    autoResume: { ask_user: { value: '0' } },
+    maxMs: 60_000,
+    check: ({ blocks }) => {
+      const v = blocks.find((b) => b.type === 'price_verdict');
+      return [
+        [!!v, 'judged the price'],
+        [!!v?.bargain && v.bargain.aim <= v.bargain.fair_max && v.bargain.fair_max <= v.bargain.walk_away, 'gave an ordered bargaining range'],
+      ];
+    },
+  },
+  {
+    id: 'glossary',
+    about: 'Explains a Tehran phone-buying term in one line',
+    turns: [{ message: 'نات اکتیو یعنی چی؟', ctx: {} }],
+    maxMs: 30_000,
+    check: ({ tools, final }) => [
+      [tools.includes('explain_term'), 'used the glossary'],
+      [final.text.length < 500, 'short answer'],
+    ],
+  },
   {
     id: 'out-of-scope',
     about: 'Non-shopping request → one-line redirect, no tools, no UI',
@@ -138,6 +201,7 @@ export const SCENARIOS = [
       [tools.length === 0, 'called no tools'],
       [seen.length === 0, 'rendered no UI'],
       [final.text.length > 0 && final.text.length < 400, 'short redirect'],
+      [/خرید|مغازه|محصول|کالا|بخری|قیمت/.test(final.text) && !/عشق|برگ‌ریز|دلم|خزان/.test(final.text), 'steered back to shopping (did not write the poem)'],
     ],
   },
   {

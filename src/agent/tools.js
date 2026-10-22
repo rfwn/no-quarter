@@ -6,7 +6,10 @@
 import { z } from 'zod';
 import { defineTool, ToolError } from '../harness/registry.js';
 import * as catalog from '../data/catalog.js';
-import { normalizeText } from '../data/normalize.js';
+import { productCard, compareCards, familyOf, familyLabels } from '../data/families.js';
+import { bargainTips, GLOSSARY } from '../data/buying.js';
+import { planShoppingList, resolveItem } from '../data/shoppingList.js';
+import { normalizeText, queryTokens } from '../data/normalize.js';
 import { instagramEvidence, followupsForThread, recentAnswer, outreachMessage, createFollowup, shopChannels } from '../followups.js';
 import { sanitizeSellerText } from '../governance/untrusted.js';
 import { websiteEvidence } from '../integrations/website.js';
@@ -34,6 +37,12 @@ function resolveOffers(state, ids, min) {
   return offers;
 }
 
+/** A product plus its type card (phone/laptop/shoes/…); `focus` puts the labels the user cares about first. */
+function withCard(p, focus = []) {
+  const full = catalog.getProduct(p.product_id, { specs: 80 });
+  return { ...p, family: familyOf(p.category), card: full ? productCard(full, focus) : null };
+}
+
 const pricesFacts = (offers) => ({ prices: offers.map((o) => o.price).filter(Boolean), phones: [] });
 
 /** What the model sees of an offer: no coordinates or links; seller text marked untrusted. */
@@ -51,7 +60,8 @@ function offerForModel(o) {
     passage: o.passage,
     open: o.open.status,
     hours_today: o.open.today,
-    warranty: o.warranty ? `${o.warranty.provider}${o.warranty.months ? ` ${o.warranty.months} ماه` : ''}` : null,
+    warranty: o.warranty_kind?.label || null,
+    seller_claims: (o.seller_claims || []).map((c) => c.label),
     torobpay_in_person: o.torobpay_in_person,
     installments: o.installments,
     has_instagram: o.has_instagram,
@@ -78,13 +88,15 @@ export function shopBoardBlock({ product, result, filters, maybe = [], highlight
   return {
     type: 'shop_board',
     data_as_of: catalog.dataAsOf(),
-    product: product ? { product_id: product.product_id, title: product.title, image: product.image, category: product.category } : null,
+    product: product ? { product_id: product.product_id, title: product.title, image: product.image, category: product.category, card: withCard(product).card } : null,
     filters,
     total: result.total,
     matched: result.matched,
     excluded_by_filters: result.excluded_by_filters,
     price_range: result.price_range,
     price_median: result.price_median ?? null,
+    bargain: result.bargain || null,
+    time: result.time || null,
     offers: result.offers,
     maybe_shops: maybe,
     highlights,
@@ -93,6 +105,22 @@ export function shopBoardBlock({ product, result, filters, maybe = [], highlight
 }
 
 // ---------- step 1: understand & find the product ----------
+
+/**
+ * The search found the one product they named ("آیفون ۱۳ ۱۲۸ گیگ استوک"): every query word, a model number,
+ * a single full match that shops list. Not for price checks, "X or Y?" or photos — those need another step.
+ */
+// "یه گوشی، یه قاب و یه شارژر": two or more "یه/یک …" items in one message.
+export const LIST_INTENT = /(یه|یک|یدونه)\s[^،,]+[،,]\s*(و\s*)?(یه|یک|یدونه)\s|(یه|یک)\s[^،,]+\sو\s(یه|یک)\s/;
+
+function confidentPick(query, results, lastUser = '') {
+  if (/\sیا\s|میلیون|تومان|\[عکس|مقایسه|فرق|بهتر/.test(lastUser)) return null;
+  if (LIST_INTENT.test(lastUser)) return null; // several items → plan_list, not one product's shops
+  const toks = queryTokens(query);
+  if (toks.length < 2 || !toks.some((alts) => alts.some((t) => /\d/.test(t)))) return null;
+  const full = results.filter((p) => p.shops > 0 && toks.every((alts) => alts.some((a) => normalizeText(`${p.title} ${p.model || ''}`).includes(a))));
+  return full.length === 1 ? full[0] : null;
+}
 
 const search_products = defineTool({
   name: 'search_products',
@@ -105,13 +133,27 @@ const search_products = defineTool({
     brand: z.string().max(60).optional().describe('Exact brand name from a previous facets list'),
     max_price: toman(),
   }),
-  async run({ query, category, brand, max_price }) {
+  async run({ query, category, brand, max_price }, { state, userTexts = [] }) {
     const r = catalog.searchProducts(query, { category, brand, maxPrice: max_price, limit: 10 });
+    const results = r.results.map((p) => withCard(p));
+    // One clear match and we know where they are: show its sellers now — saves a whole model round.
+    const pick = (origin(state) || state.ctx?.locationAsked) && confidentPick(query, results, userTexts.at(-1));
+    const sellers = pick ? sellersFor(pick, { max_price }, state) : null;
+    const families = [...new Set(results.map((p) => p.family).filter((f) => f !== 'generic'))];
     return {
-      model: { match: r.match, total_matches: r.total_matches, results: r.results.map(({ image, ...p }) => p), facets: r.facets },
+      model: {
+        match: r.match,
+        total_matches: r.total_matches,
+        results: results.map(({ image, card, ...p }) => ({ ...p, key_specs: card?.facts.slice(0, 4).map((f) => `${f.label}: ${f.value}`) })),
+        facets: r.facets,
+        focus_labels_by_family: Object.fromEntries(families.map((f) => [f, familyLabels(f)])),
+        ...(sellers ? { sellers_already_shown_for: pick.product_id, sellers: sellers.model, note: 'Its shop board is already on screen: do not call find_sellers again for it; summarise the sellers.' } : {}),
+      },
+      ...(sellers ? { blocks: sellers.blocks } : {}),
       update: {
-        products: Object.fromEntries(r.results.map((p) => [p.product_id, p])),
-        facts: { prices: r.results.flatMap((p) => [p.min_price, p.max_price]).filter(Boolean), phones: [] },
+        ...(sellers ? { offers: sellers.update.offers, fetchedOfferIds: sellers.update.fetchedOfferIds } : {}),
+        products: { ...Object.fromEntries(results.map((p) => [p.product_id, p])), ...(sellers?.update.products || {}) },
+        facts: { prices: [...r.results.flatMap((p) => [p.min_price, p.max_price]).filter(Boolean), ...(sellers?.update.facts.prices || [])], phones: [] },
       },
     };
   },
@@ -146,6 +188,43 @@ const resolve_place = defineTool({
   },
 });
 
+/** Sellers of one product near the user: the board, alternatives when nobody lists it, and the model's view. */
+function sellersFor(product, args, state) {
+  const o = origin(state);
+  const filters = filtersFromArgs(args);
+  const result = catalog.findOffers(product.product_id, { origin: o, ...filters, limit: 15 });
+  const maybe = catalog.categoryShopsNear(product.category, { origin: o, radiusKm: args.radius_km || 2, exclude: result.offers.map((x) => x.shop_id), limit: 5 });
+  const followed = Object.fromEntries(result.offers.map((x) => [x.offer_id, recentAnswer(x.shop_id, x.product_id)?.extracted || null]).filter(([, v]) => v));
+  // Nobody lists it at all: alternatives that ARE offered nearby, found here rather than left to the model.
+  const alts = result.total === 0 ? catalog.findAlternatives(product.product_id, { origin: o, maxPrice: args.max_price, radiusKm: args.radius_km }) : [];
+  return {
+    model: {
+      product: product.title,
+      total_offers: result.total,
+      matched: result.matched,
+      excluded_by_filters: result.excluded_by_filters,
+      price_range: result.price_range,
+      offers: result.offers.slice(0, 10).map(offerForModel),
+      shops_answered_recently: followed,
+      maybe_have_it_nearby: maybe.map((m) => ({ shop_id: m.shop_id, shop_name: m.shop_name, distance_km: m.distance_km })),
+      bargain_range: result.bargain,
+      time_now: result.time ? { open_now: result.time.open_now, closing_soon: result.time.closing_soon, advice: result.time.advice } : null,
+      ...(alts.length ? { no_sellers_alternatives_shown: alts.map(({ image, ...a }) => a) } : {}),
+    },
+    update: {
+      products: { [product.product_id]: { ...product, image: product.image || product.images?.[0] } },
+      offers: Object.fromEntries(result.offers.map((x) => [x.offer_id, x])),
+      facts: { prices: [...pricesFacts(result.offers).prices, ...alts.flatMap((a) => [a.min_price, a.cheapest_near]).filter(Number.isFinite)], phones: [] },
+      fetchedOfferIds: result.offers.map((x) => x.offer_id),
+      ...(alts.length ? { products: { [product.product_id]: { ...product, image: product.image || product.images?.[0] }, ...Object.fromEntries(alts.map((a) => [a.product_id, a])) } } : {}),
+    },
+    blocks: [
+      { ...shopBoardBlock({ product, result, filters, maybe }), id: `auto-${product.product_id}` },
+      ...(alts.length ? [{ type: 'product_list', id: `alts-${product.product_id}`, title: 'اینو کسی نداره؛ این‌ها نزدیکت هست', reason: 'alternatives', products: alts }] : []),
+    ],
+  };
+}
+
 const find_sellers = defineTool({
   name: 'find_sellers',
   kind: 'data',
@@ -157,36 +236,7 @@ const find_sellers = defineTool({
     if (!o && !state.ctx?.locationAsked) throw new ToolError("The user's location is unknown. Call request_location first (or resolve_place if they named a place).");
     const product = state.products?.[args.product_id] || catalog.getProduct(args.product_id);
     if (!product) throw new ToolError('Unknown product_id. Use one from search_products.');
-    const filters = filtersFromArgs(args);
-    const result = catalog.findOffers(args.product_id, { origin: o, ...filters, limit: 15 });
-    const maybe = catalog.categoryShopsNear(product.category, { origin: o, radiusKm: args.radius_km || 2, exclude: result.offers.map((x) => x.shop_id), limit: 5 });
-    const followed = Object.fromEntries(result.offers.map((x) => [x.offer_id, recentAnswer(x.shop_id, x.product_id)?.extracted || null]).filter(([, v]) => v));
-    // Nobody lists it at all: alternatives that ARE offered nearby, found here rather than left to the model.
-    const alts = result.total === 0 ? catalog.findAlternatives(product.product_id, { origin: o, maxPrice: args.max_price, radiusKm: args.radius_km }) : [];
-    return {
-      model: {
-        product: product.title,
-        total_offers: result.total,
-        matched: result.matched,
-        excluded_by_filters: result.excluded_by_filters,
-        price_range: result.price_range,
-        offers: result.offers.slice(0, 10).map(offerForModel),
-        shops_answered_recently: followed,
-        maybe_have_it_nearby: maybe.map((m) => ({ shop_id: m.shop_id, shop_name: m.shop_name, distance_km: m.distance_km })),
-        ...(alts.length ? { no_sellers_alternatives_shown: alts.map(({ image, ...a }) => a) } : {}),
-      },
-      update: {
-        products: { [product.product_id]: { ...product, image: product.image || product.images?.[0] } },
-        offers: Object.fromEntries(result.offers.map((x) => [x.offer_id, x])),
-        facts: { prices: [...pricesFacts(result.offers).prices, ...alts.flatMap((a) => [a.min_price, a.cheapest_near]).filter(Number.isFinite)], phones: [] },
-        fetchedOfferIds: result.offers.map((x) => x.offer_id),
-        ...(alts.length ? { products: { [product.product_id]: { ...product, image: product.image || product.images?.[0] }, ...Object.fromEntries(alts.map((a) => [a.product_id, a])) } } : {}),
-      },
-      blocks: [
-        { ...shopBoardBlock({ product, result, filters, maybe }), id: `auto-${product.product_id}` },
-        ...(alts.length ? [{ type: 'product_list', id: `alts-${product.product_id}`, title: 'اینو کسی نداره؛ این‌ها نزدیکت هست', reason: 'alternatives', products: alts }] : []),
-      ],
-    };
+    return sellersFor(product, args, state);
   },
 });
 
@@ -230,6 +280,54 @@ const find_alternatives = defineTool({
       update: { products: Object.fromEntries(alts.map((a) => [a.product_id, a])), facts: { prices: alts.flatMap((a) => [a.min_price, a.cheapest_near]).filter((x) => Number.isFinite(x)), phones: [] } },
       blocks: alts.length ? [{ type: 'product_list', title: 'جایگزین‌های نزدیک', reason: 'alternatives', products: alts }] : [],
     };
+  },
+});
+
+const show_shop = defineTool({
+  name: 'show_shop',
+  kind: 'ui',
+  description:
+    "Show a shop's page: what it lists (searchable), weekly hours, passage/floor/unit, payment options, channels — each fact labelled with its source. Use when the user asks about one shop (\"این مغازه چی داره؟\", \"«X» کجاست؟\", \"ساعت کاری «X»\"). Pass shop_id if you have it, else shop_name. Optional query searches inside the shop.",
+  schema: z.object({ shop_id: id.optional(), shop_name: z.string().max(80).optional(), query: z.string().max(60).optional() }),
+  async run({ shop_id, shop_name, query }, { state }) {
+    let sid = shop_id && catalog.getShop(shop_id) ? shop_id : null;
+    if (!sid && shop_name) {
+      const known = Object.values(state.offers || {}).find((o) => o.shop_name.includes(shop_name) || shop_name.includes(o.shop_name));
+      sid = known?.shop_id || catalog.findShopsByName(shop_name, 1)[0]?.shop_id || null;
+    }
+    if (!sid) throw new ToolError('Shop not found. Use a shop_id from earlier results, or the exact shop name.');
+    const page = catalog.shopPage(sid, { origin: origin(state), query: query || '' });
+    const { lat, lon, phone, ...pub } = page;
+    return {
+      model: {
+        name: page.name,
+        passage: page.passage,
+        floor_unit: page.floor_unit,
+        distance_km: page.distance_km,
+        open_now: page.open.status,
+        hours_today: page.open.today,
+        listed_products: page.catalog.total,
+        listed_categories: page.catalog.categories,
+        declared_only_categories: page.declared_only_categories,
+        first_items: page.catalog.items.slice(0, 6).map((i) => ({ title: i.title, price_toman: i.price, price_age_days: i.price_age_days })),
+        has_instagram: !!page.instagram,
+        has_website: !!page.website,
+      },
+      update: { facts: { prices: page.catalog.items.map((i) => i.price).filter(Boolean), phones: [] }, offers: Object.fromEntries(page.catalog.items.map((i) => [i.offer_id, i])) },
+      blocks: [{ type: 'shop_profile', id: `shop-${sid}`, shop: { ...pub, lat, lon }, query: query || '' }],
+    };
+  },
+});
+
+const explain_term = defineTool({
+  name: 'explain_term',
+  kind: 'data',
+  description: `Plain explanation of a Tehran shopping term the user asks about or should know: ${Object.keys(GLOSSARY).join('، ')}.`,
+  schema: z.object({ term: z.string().max(40) }),
+  async run({ term }) {
+    const key = Object.keys(GLOSSARY).find((k) => term.includes(k) || k.includes(term));
+    if (!key) throw new ToolError(`Known terms: ${Object.keys(GLOSSARY).join('، ')}.`);
+    return { model: { term: key, explanation: GLOSSARY[key] } };
   },
 });
 
@@ -338,12 +436,67 @@ const show_shops = defineTool({
 const show_products = defineTool({
   name: 'show_products',
   kind: 'ui',
-  description: 'Show product cards (image, title, price range, number of shops) the user can tap to find shops. Use to let the user browse/choose models.',
-  schema: z.object({ product_ids: z.array(id).min(1).max(8), title: z.string().max(60).optional() }),
-  async run({ product_ids, title }, { state }) {
-    const products = product_ids.map((p) => state.products?.[p] || catalog.getProduct(p)).filter(Boolean);
+  description:
+    "Show product cards (image, title, price range, number of shops, and the type's key specs — sizes/colours for clothes and shoes) the user can tap to find shops. Use to let the user browse/choose models. focus: up to 3 labels from focus_labels_by_family that matter for THIS user (e.g. «باتری», «صفحه» for a simple phone for mom), shown first.",
+  schema: z.object({ product_ids: z.array(id).min(1).max(8), title: z.string().max(60).optional(), focus: z.array(z.string().max(30)).max(3).optional() }),
+  async run({ product_ids, title, focus = [] }, { state }) {
+    const products = product_ids.map((p) => state.products?.[p] || catalog.getProduct(p)).filter(Boolean).map((p) => withCard(p, focus));
     if (!products.length) throw new ToolError('Unknown product_ids.');
-    return { model: { shown: products.length }, blocks: [{ type: 'product_list', title: title || null, products }] };
+    return { model: { shown: products.length }, blocks: [{ type: 'product_list', title: title || null, products, focus }] };
+  },
+});
+
+const plan_list = defineTool({
+  name: 'plan_list',
+  kind: 'ui',
+  description:
+    'Several DIFFERENT items in one trip ("یه گوشی، یه قاب براش و یه شارژر"): resolves each item and shows up to three ways to buy them all nearby — one shop, one passage, or the cheapest mix — with totals, stops and anything missing. Pass each item as a short search query (or a product_id you already have). Needs the location (request_location first if unknown).',
+  schema: z.object({ items: z.array(z.object({ query: z.string().max(80).optional(), product_id: id.optional() })).min(2).max(5) }),
+  async run({ items }, { state }) {
+    const o = origin(state);
+    if (!o && !state.ctx?.locationAsked) throw new ToolError("The user's location is unknown. Call request_location first.");
+    const products = [];
+    const unresolved = [];
+    for (const it of items) {
+      const p = (it.product_id && (state.products?.[it.product_id] || catalog.getProduct(it.product_id))) || (it.query ? resolveItem(it.query) : null);
+      if (p) products.push(p);
+      else unresolved.push(it.query || it.product_id);
+    }
+    if (products.length < 2) throw new ToolError(`Could not find enough of these items in the data: ${unresolved.join('، ')}. Search them separately.`);
+    const plan = planShoppingList(products, o);
+    const offers = plan.options.flatMap((op) => op.stops.flatMap((s) => s.items.map((i) => i.offer_id)));
+    const all = Object.fromEntries(products.flatMap((p) => catalog.findOffers(p.product_id, { origin: o, limit: 300 }).offers).filter((x) => offers.includes(x.offer_id)).map((x) => [x.offer_id, x]));
+    return {
+      model: {
+        items: plan.items.map((i) => ({ title: i.title, sellers_nearby: i.sellers_nearby })),
+        not_found: unresolved,
+        options: plan.options.map((op) => ({ title: op.title, total_toman: op.total, stops: op.stop_count, covered: `${op.covered}/${products.length}`, missing: op.missing, offer_ids: op.offer_ids, shops: op.stops.map((s) => s.shop_name) })),
+      },
+      update: {
+        products: Object.fromEntries(products.map((p) => [p.product_id, p])),
+        offers: all,
+        facts: { prices: [...plan.options.map((op) => op.total), ...Object.values(all).map((x) => x.price)].filter(Boolean), phones: [] },
+      },
+      blocks: [{ type: 'shopping_list', id: `list-${products.map((p) => p.product_id).join('-')}`, items: plan.items, not_found: unresolved, options: plan.options }],
+    };
+  },
+});
+
+const compare_products = defineTool({
+  name: 'compare_products',
+  kind: 'ui',
+  description:
+    'Side-by-side comparison of 2-3 PRODUCTS (models), e.g. "آیفون ۱۵ یا گلکسی S24؟", "این دوتا کفش": the key specs of their type with the better value marked, price range and how many shops list each. focus: up to 3 labels (from focus_labels_by_family) that matter for this user, shown first. For comparing SHOPS selling one product use compare_offers.',
+  schema: z.object({ product_ids: z.array(id).min(2).max(3), focus: z.array(z.string().max(30)).max(3).optional() }),
+  async run({ product_ids, focus = [] }, { state }) {
+    const products = product_ids.map((p) => state.products?.[p] || catalog.getProduct(p)).filter(Boolean).map((p) => withCard(p, focus));
+    if (products.length < 2) throw new ToolError('Need 2-3 product_ids from search_products.');
+    const rows = compareCards(products.map((p) => p.card || { facts: [] }));
+    return {
+      model: { products: products.map((p) => ({ product_id: p.product_id, title: p.title, min_price: p.min_price, max_price: p.max_price, shops: p.shops })), rows: rows.map((r) => ({ label: r.label, values: r.values, better: r.winner == null ? null : products[r.winner].title })) },
+      update: { facts: { prices: products.flatMap((p) => [p.min_price, p.max_price]).filter(Boolean), phones: [] } },
+      blocks: [{ type: 'product_compare', id: `pc-${product_ids.join('-')}`, products: products.map(({ card, ...p }) => ({ ...p, badges: card?.badges || [], sizes: card?.sizes || [], colors: card?.colors || [] })), rows, focus }],
+    };
   },
 });
 
@@ -371,7 +524,7 @@ const compare_offers = defineTool({
     const answers = Object.fromEntries(offers.map((o) => [o.offer_id, recentAnswer(o.shop_id, o.product_id)?.extracted || null]));
     return {
       model: { compared: offers.map(offerForModel), best: wins, shop_answers: answers },
-      blocks: [{ type: 'compare', offers, best: wins, answers }],
+      blocks: [{ type: 'compare', offers, best: wins, answers, bargain: catalog.findOffers(offers[0].product_id, { limit: 1 }).bargain }],
     };
   },
 });
@@ -391,10 +544,13 @@ const price_verdict = defineTool({
     const verdict = offered_price_toman < low * 0.7 ? 'suspicious' : offered_price_toman <= low * 1.02 || ratio <= 0.97 ? 'good' : ratio <= 1.06 ? 'fair' : 'high';
     const cheaperNearby = r.offers.filter((o) => o.price && o.price < offered_price_toman && o.distance_km != null && o.distance_km <= 1.5).slice(0, 3);
     const product = state.products?.[product_id] || catalog.getProduct(product_id);
+    const cheapestNear = [...cheaperNearby].sort((a, b) => a.price - b.price)[0] || r.offers.filter((o) => o.price && o.price < offered_price_toman).sort((a, b) => a.price - b.price)[0] || null;
     const result = {
       product_title: product?.title,
       offered_price_toman,
       verdict,
+      bargain: r.bargain,
+      tips: verdict === 'good' ? [] : bargainTips({ cheaper: cheapestNear, family: familyOf(product?.category) }),
       listed: { count: prices.length, min: low, median: med, max: prices[prices.length - 1] },
       diff_vs_median_toman: offered_price_toman - med,
       cheaper_within_1_5km: cheaperNearby.map(offerForModel),
@@ -494,6 +650,7 @@ const plan_visit = defineTool({
           o.warranty?.provider ? `گارانتی «${o.warranty.provider}» رو روی جعبه چک کن` : 'گارانتی ثبت نشده؛ حضوری بپرس',
           o.installments.length ? `اقساط (${o.installments.join('، ')}): کارت ملی همراهت باشه` : null,
           o.torobpay_in_person ? 'ترب‌پی حضوری قبول می‌کنه' : null,
+          productCard({ title: o.title || state.products?.[o.product_id]?.title || '', category: state.products?.[o.product_id]?.category || catalog.getProduct(o.product_id)?.category }).checklist[0] || null,
         ].filter(Boolean),
       };
     });
@@ -550,9 +707,21 @@ const ask_shop = defineTool({
     "Help the USER ask a shop about stock and today's price: shows the shop's channels (Instagram DM, website, WhatsApp, phone), a ready message to copy, and a box to paste the shop's reply. ترب‌چین never sends anything itself. Use when a promising shop's price is stale or the user wants certainty before going. If a fresh answer from this shop exists, it is shown instead.",
   schema: z.object({ shop_id: id, product_id: id }),
   async run({ shop_id, product_id }, { state, threadId }) {
-    const shop = catalog.getShop(shop_id);
     const product = state.products?.[product_id] || catalog.getProduct(product_id);
-    if (!shop || !product) throw new ToolError('Unknown shop_id or product_id.');
+    if (!product) throw new ToolError('Unknown product_id. Use one from search_products.');
+    // "ask the first one" before any shop was shown: point the model at the sellers it knows, or at find_sellers.
+    const known = Object.values(state.offers || {}).filter((o) => o.product_id === product_id);
+    // No board shown yet ("از اولی بپرس" right after a search): "the first one" is the nearest seller.
+    const nearest = known.length ? null : catalog.findOffers(product_id, { origin: origin(state), limit: 1 }).offers[0];
+    const shop = catalog.getShop(shop_id) || (known.length === 1 ? catalog.getShop(known[0].shop_id) : null) || (nearest ? catalog.getShop(nearest.shop_id) : null);
+    if (!shop) {
+      throw new ToolError(
+        known.length
+          ? `Unknown shop_id. Shops listing this product: ${known.slice(0, 6).map((o) => `${o.shop_id} (${o.shop_name})`).join(', ')}.`
+          : 'No shop lists this product. Offer find_alternatives instead.',
+      );
+    }
+    shop_id = shop.shop_id;
     const f = createFollowup({ threadId, shopId: shop_id, productId: product_id, productTitle: product.title, message: outreachMessage(product.title) });
     const channels = shopChannels(shop);
     return {
@@ -571,12 +740,16 @@ export const TOOLS = [
   find_sellers,
   find_shops_nearby,
   find_alternatives,
+  show_shop,
+  explain_term,
   get_shop_contact,
   check_shop_instagram,
   check_shop_website,
   get_followups,
   show_shops,
   show_products,
+  plan_list,
+  compare_products,
   compare_offers,
   price_verdict,
   plan_visit,

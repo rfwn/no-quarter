@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+
+      - name: Install
+        run: |
+          npm ci
+          npm --prefix web ci
+
+      - name: Build the web bundle
+        run: npm run build
+
+      - name: Build the dataset database
+        run: npm run db:build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Server starts and answers health checks
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY || 'ci-placeholder' }} # health check makes no model calls
+        run: |
+          node src/server.js &
+          for i in $(seq 1 20); do curl -fs localhost:3000/api/health && break; sleep 1; done
+          curl -fsI localhost:3000/ | grep -i content-security-policy
+
+      # Live behavioural evals cost model calls: a short smoke set, only when the key is configured.
+      - name: Eval smoke test
+        if: env.LLM_API_KEY != ''
+        env:
+          LLM_BASE_URL: https://ai.boxapi.ir/ai/v1
+          LLM_MODEL: gpt-5.4-mini
+        run: node evals/run.js near-me shop-page price-check out-of-scope

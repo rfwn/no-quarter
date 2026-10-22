@@ -20,7 +20,7 @@ import { AgentState } from './state.js';
 import { systemPrompt } from './prompt.js';
 import { chatModel } from './model.js';
 import { typeOf, textOf, trimHistory, userTexts } from './history.js';
-import { TOOLS, TOOL_MAP, humanBlock } from './tools.js';
+import { LIST_INTENT, TOOLS, TOOL_MAP, humanBlock } from './tools.js';
 import { execute, toModelTools } from '../harness/registry.js';
 import { getTrace } from '../harness/tracer.js';
 import { checkGrounding, emptyFacts, mergeFacts, redactUngroundedPhones } from '../governance/grounding.js';
@@ -35,6 +35,10 @@ const STEP_LABELS = {
   resolve_place: (a) => `پیدا کردن «${a.text}» روی نقشه`,
   find_sellers: () => 'پیدا کردن مغازه‌های نزدیک',
   find_shops_nearby: () => 'گشتن مغازه‌های اطراف',
+  show_shop: () => 'باز کردن صفحه‌ی مغازه',
+  compare_products: () => 'مقایسه‌ی مدل‌ها',
+  plan_list: () => 'چیدن لیست خرید',
+  explain_term: () => 'توضیح اصطلاح',
   find_alternatives: () => 'گشتن دنبال جایگزین',
   get_shop_contact: () => 'گرفتن اطلاعات تماس مغازه',
   check_shop_instagram: () => 'بررسی پست‌های اخیر اینستاگرام مغازه',
@@ -49,8 +53,8 @@ const STEP_LABELS = {
 
 // Harness preconditions on tool use (deterministic; the prompt alone wasn't enough — see evals).
 const MAX_SEARCHES = 3;
-const ONCE_PER_TURN = new Set(['show_shops', 'compare_offers', 'plan_visit', 'price_verdict']);
-const RESULT_BLOCKS = new Set(['shop_board', 'compare', 'visit_plan', 'price_verdict']);
+const ONCE_PER_TURN = new Set(['show_shops', 'compare_offers', 'compare_products', 'plan_list', 'plan_visit', 'price_verdict']);
+const RESULT_BLOCKS = new Set(['shop_board', 'compare', 'product_compare', 'shopping_list', 'visit_plan', 'price_verdict']);
 const CONTACT_REQUEST = /شماره|تماس|تلفن|زنگ|آدرس دقیق|اینستا|واتساپ|contact|phone/i;
 const lastUserText = (messages) => userTexts(messages).at(-1) || '';
 
@@ -128,12 +132,13 @@ async function toolsNode(state, cfg) {
     } else {
       if (call.name === 'search_products') out.turn.searches = (state.turn.searches || 0) + (out.turn.searches || 0) + 1;
       if (call.name === 'search_products') out.turn.lastSearch = null;
-      if (ONCE_PER_TURN.has(call.name)) out.turn.uiDone = [...(state.turn.uiDone || []), ...(out.turn.uiDone || []), call.name];
       toolCalls++;
       if (trace) trace.counters.toolCalls++;
       emit(cfg, { type: 'step', label: STEP_LABELS[call.name]?.(call.args || {}) || 'در حال بررسی', tool: call.name });
       const res = await execute(def, call.args, toolCtx, trace);
       if (res.ok) {
+        // Only a call that worked counts as "done this turn"; a failed one (wrong ids) may be retried.
+        if (ONCE_PER_TURN.has(call.name)) out.turn.uiDone = [...(state.turn.uiDone || []), ...(out.turn.uiDone || []), call.name];
         const { model, update = {}, blocks = [] } = res.result;
         content = model;
         for (const key of ['offers', 'products', 'ctx']) {
@@ -211,6 +216,13 @@ async function humanNode(state, cfg) {
 // Behavioural contract on the final reply (beyond number grounding).
 const CLAIMS_OUTREACH = /(پیام|سوال|سؤال)[^.؟\n]{0,40}(ارسال شد|فرستاده شد|فرستادم|ارسال کردم)|از (فروشگاه|مغازه)[^.؟\n]{0,30}پرسیدم|منتظر (پاسخ|جواب) (فروشگاه|مغازه)/;
 
+// "Plan my trip" — answered with a visit plan, not a description of one.
+const PLAN_INTENT = /برنامه(‌ی|ی)?\s*(رفتن|خرید|مسیر)|مسیر(م)?\s*(رو|را)?\s*بچین|برنامه.{0,20}بچین/;
+
+// "X or Y?" between models — answered with a side-by-side card, not just text.
+const VERSUS = /\sیا\s/;
+const VERSUS_INTENT = /بهتر|کدوم|کدام|فرق|مقایسه|خوبه|بخرم/;
+
 // The user relays a shop's "we don't have it" — the turn should end with somewhere else to buy it.
 const OUT_OF_STOCK = /(تموم|تمام)\s*(کرد|شد|شده)|موجود\s*(ندار|نیست)|ناموجود|نداریم|نداشت/;
 
@@ -239,6 +251,16 @@ function contractViolations(text, turn, state) {
     v.push(`The user picked a product (product_id ${turn.pickedProduct}). Don't ask whether to look for shops — call find_sellers for it now${state.ctx?.lat == null && !state.ctx?.locationAsked ? ' (call request_location first: the location is unknown)' : ''}.`);
   }
   const lastUser = lastUserText(state.messages);
+  if (LIST_INTENT.test(lastUser) && !state.ui.some((b) => b.type === 'shopping_list' || b.type === 'visit_plan')) {
+    v.push('They listed several different items for one trip. Call plan_list with each item as a short query (request_location first if the location is unknown).');
+  }
+  if (PLAN_INTENT.test(lastUser) && !state.ui.some((b) => b.type === 'visit_plan') && Object.keys(state.offers || {}).length) {
+    v.push('They asked for a visit plan. Call plan_visit with the 1-3 offer_ids they meant (the best ones from the comparison or board) — do not just describe it.');
+  }
+  const foundModels = (turn.lastSearch || []).length;
+  if (VERSUS.test(lastUser) && VERSUS_INTENT.test(lastUser) && foundModels >= 2 && !state.ui.some((b) => b.type === 'product_compare' || b.type === 'compare')) {
+    v.push('They asked which of two models to pick. Search each model if needed, then call compare_products with both product_ids (and focus for what matters to them).');
+  }
   if (OUT_OF_STOCK.test(lastUser) && !state.ui.some((b) => b.type === 'shop_board' || b.reason === 'alternatives')) {
     v.push('The shop is out of stock. Find somewhere else: find_alternatives for this product, and/or find_sellers to show other shops that list it.');
   }

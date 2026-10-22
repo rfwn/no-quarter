@@ -72,11 +72,11 @@ async function postJson(path, body) {
  * POST /api/chat streams NDJSON events from the agent runtime:
  * step · token · text_reset · ui · interrupt · done. Resolves with the final `done` or `interrupt` event.
  */
-export async function streamChat({ threadId, message, resume, ctx }, onEvent) {
+export async function streamChat({ threadId, message, resume, ctx, image }, onEvent) {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ threadId, message, resume, ctx }),
+    body: JSON.stringify({ threadId, message, resume, ctx, image }),
   });
   if (!res.ok || !res.body) throw new Error((await res.json().catch(() => ({}))).error || 'ارتباط با سرور برقرار نشد.');
 
@@ -107,7 +107,7 @@ export async function fetchThread(threadId) {
   return res.json();
 }
 
-export const fetchShop = (threadId, shopId) => postJson('/api/shop', { threadId, shopId });
+export const fetchShop = (threadId, shopId, opts = {}) => postJson('/api/shop', { threadId, shopId, ...opts });
 
 /** Re-run a shop board with new filters — no agent turn. */
 export const refilterOffers = (threadId, productId, filters, ctx) => postJson('/api/offers', { threadId, productId, filters, ctx });

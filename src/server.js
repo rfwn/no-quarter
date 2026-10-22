@@ -73,7 +73,7 @@ import { renderText } from './channels/text.js';
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const ADMIN_PAGE = fileURLToPath(new URL('./admin.html', import.meta.url));
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff' };
 const THREAD_RE = /^[\w-]{8,80}$/;
 const FILTER_KEYS = { radius_km: 'radiusKm', max_price: 'maxPrice', open_now: 'openNow', torobpay: 'torobpay', installments: 'installments', fast_delivery: 'fastDelivery', warranty: 'warranty' };
 
@@ -96,9 +96,9 @@ async function readRaw(req, max = 20_000) {
   return raw;
 }
 
-async function readJson(req) {
+async function readJson(req, max) {
   try {
-    return JSON.parse((await readRaw(req)) || '{}');
+    return JSON.parse((await readRaw(req, max)) || '{}');
   } catch (err) {
     throw err.status ? err : Object.assign(new Error('Invalid JSON'), { status: 400 });
   }
@@ -166,18 +166,47 @@ async function handleWebhook(req, res) {
   }
 }
 
+// Security headers on every response. The CSP lists exactly what the page loads: our own bundle, Torob
+// product images, OpenStreetMap tiles, and Neshan's map SDK/tiles/API (used when its key works).
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://static.neshan.org",
+  "style-src 'self' 'unsafe-inline' https://static.neshan.org",
+  "img-src 'self' data: blob: https://*.torob.com https://tile.openstreetmap.org https://*.neshan.org",
+  "connect-src 'self' https://api.neshan.org",
+  "font-src 'self' data:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join('; ');
+
+function securityHeaders(req, res) {
+  res.setHeader('Content-Security-Policy', CSP);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  // Behind Liara's HTTPS proxy only; never on plain localhost.
+  if (req.headers['x-forwarded-proto'] === 'https') res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+}
+
 createServer(async (req, res) => {
+  securityHeaders(req, res);
   const url = new URL(req.url, 'http://localhost');
   try {
     if (req.method === 'POST' && url.pathname === '/api/chat') {
-      const { threadId, message, resume, ctx } = await readJson(req);
+      // Up to ~1.5 MB so a resized photo fits; anything else stays small.
+      const { threadId, message, resume, ctx, image } = await readJson(req, 1_600_000);
       if (!validThread(threadId)) return sendJson(res, 400, { error: 'threadId is required' });
-      if (!message?.trim?.() && !resume) return sendJson(res, 400, { error: 'message or resume is required' });
+      const photo = typeof image === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image) && image.length <= 1_500_000 ? image : null;
+      if (image && !photo) return sendJson(res, 400, { error: 'عکس باید JPEG/PNG/WebP و کمتر از ۱ مگابایت باشه.' });
+      if (!message?.trim?.() && !resume && !photo) return sendJson(res, 400, { error: 'message or resume is required' });
       // Newline-delimited JSON: progress, tokens, UI blocks, interrupts, then `done`.
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
       let closed = false;
       res.on('close', () => (closed = true));
-      await runTurn({ threadId, userId: clientId(req), channel: 'web', message, resume, ctx }, (event) => {
+      await runTurn({ threadId, userId: clientId(req), channel: 'web', message, resume, ctx, image: photo }, (event) => {
         if (!closed) res.write(JSON.stringify(event) + '\n');
       });
       return res.end();
@@ -199,9 +228,9 @@ createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/shop') {
-      const { threadId, shopId } = await readJson(req);
+      const { threadId, shopId, query, category, offset, ctx } = await readJson(req);
       if (!validThread(threadId)) return sendJson(res, 400, { error: 'threadId is required' });
-      const shop = await getShopForThread(threadId, String(shopId));
+      const shop = await getShopForThread(threadId, String(shopId), { query: query || '', category: category || null, offset, ctx });
       return shop ? sendJson(res, 200, shop) : sendJson(res, 404, { error: 'این مغازه پیدا نشد.' });
     }
 

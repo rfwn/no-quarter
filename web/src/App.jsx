@@ -2,13 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchAreas, fetchCoverage, fetchThread, getThreadId, loadChats, newThreadId, removeChat, setCurrentThread, streamChat, touchChat } from './api.js';
 import { Block, QUESTION_TYPES } from './GenUI.jsx';
 import { formatKm, toFaDigits } from './format.js';
-import { ArrowUpIcon, ChevronIcon, LocateIcon, PlusIcon, SearchIcon, SidebarIcon } from './Icons.jsx';
+import { CameraIcon, MicIcon, ArrowUpIcon, ChevronIcon, LocateIcon, PlusIcon, SearchIcon, SidebarIcon } from './Icons.jsx';
 import Reply from './Reply.jsx';
 import Sheet from './Sheet.jsx';
 import Mascot from './Mascot.jsx';
+import { shrinkPhoto } from './photo.js';
+import { useVoice, voiceSupported } from './voice.js';
 import Drawer from './Drawer.jsx';
 import LocationPicker from './Location.jsx';
-import { LevelChip, MissionBar, Profile, RewardNote, rewardFor } from './GameUI.jsx';
+import ShopPage from './ShopPage.jsx';
+import { onOpenShop } from './shopSheet.js';
+import { LevelChip, MissionBar, Profile, RewardNote, ThemeSwitch, rewardFor } from './GameUI.jsx';
 import { clearMission, record, startBasket, subscribe } from './game.js';
 
 // Agent results that move the basket forward. Only shown results count — never the message itself.
@@ -20,13 +24,25 @@ const recordBlock = (b) => {
   else if (b.type === 'product_list' && b.reason === 'alternatives') record('alternatives');
 };
 
+// While a tool that renders a card runs, a placeholder holds its place (results arrive a round before the text).
+const PENDING = {
+  find_sellers: 'دارم مغازه‌هایی که دارنش رو می‌چینم…',
+  find_shops_nearby: 'دارم مغازه‌های اطرافت رو پیدا می‌کنم…',
+  compare_offers: 'دارم مقایسه رو آماده می‌کنم…',
+  compare_products: 'دارم مدل‌ها رو کنار هم می‌ذارم…',
+  plan_visit: 'دارم برنامه‌ی رفتن رو می‌چینم…',
+  price_verdict: 'دارم قیمت رو با بازار می‌سنجم…',
+  show_shop: 'دارم صفحه‌ی مغازه رو باز می‌کنم…',
+  check_shop_website: 'دارم به سایت مغازه سر می‌زنم…',
+};
+
 // Product name (Liara app id: torobchin).
 const APP_NAME = 'ترب‌چین';
 
 const EXAMPLES = ['آیفون ۱۳ کارکرده ۱۲۸ گیگ نزدیکم', 'یه گوشی ساده برای مامانم', 'هدفون بی‌سیم تا ۳ میلیون', 'اینجا ۱۰۵ میلیون می‌دن، منصفانه‌ست؟'];
 
 const ORIGIN_KEY = 'torob-agent-origin';
-const NAME_KEY = 'torobchin-name'; // null: never asked · '': skipped · otherwise what to call them
+const NAME_KEY = 'torobchin-name'; // null: never asked، '': skipped، otherwise what to call them
 
 function loadName() {
   try {
@@ -90,6 +106,15 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [name, setNameState] = useState(loadName);
   const [coverage, setCoverage] = useState(null);
+  const [photo, setPhoto] = useState(null); // data URL waiting to be sent
+  const [photoError, setPhotoError] = useState('');
+  const [shopOpen, setShopOpen] = useState(null); // {shopId, name}
+  // Tab title follows the chat, as TorobChat's does: «آیفون ۱۳ ۱۲۸ | ترب‌چین».
+  const chatTitle = turns[0]?.query;
+  useEffect(() => {
+    document.title = chatTitle && chatTitle !== 'این عکس' ? `${chatTitle.slice(0, 40)} | ترب‌چین` : 'ترب‌چین | دستیار خرید حضوری';
+  }, [chatTitle]);
+  useEffect(() => onOpenShop(setShopOpen), []);
 
   // Torob's data has ~10% of Tehran's shops, from selected areas: say so when the chosen spot is thin.
   useEffect(() => {
@@ -150,14 +175,15 @@ export default function App() {
       });
       try {
         const final = await streamChat({ threadId, ...payload, ctx: { ...(origin.lat != null ? { lat: origin.lat, lon: origin.lon, place: origin.place } : {}), ...(name ? { name } : {}) } }, (e) => {
-          if (e.type === 'step') patchLast((t) => ({ steps: [...t.steps, e.label], stream: '' }));
-          else if (e.type === 'token') patchLast((t) => ({ stream: (t.stream || '') + e.text }));
+          if (e.type === 'step') patchLast((t) => ({ steps: [...t.steps, e.label], stream: '', pending: PENDING[e.tool] || t.pending || null }));
+          else if (e.type === 'photo') patchLast(() => ({ photoReading: e.text }));
+          else if (e.type === 'token') patchLast((t) => ({ stream: (t.stream || '') + e.text, pending: null }));
           else if (e.type === 'text_reset') patchLast(() => ({ stream: '' }));
           else if (e.type === 'ui') {
             recordBlock(e.block);
             patchLast((t) => {
               const items = t.items.filter((it) => !(it.kind === 'block' && e.block.replaces?.includes(it.block.id)));
-              return { items: [...items, { kind: 'block', block: e.block }] };
+              return { items: [...items, { kind: 'block', block: e.block }], pending: null };
             });
           }
         });
@@ -180,10 +206,29 @@ export default function App() {
 
   const markAnswered = (label) => patchLast((t) => ({ items: t.items.map((it) => (it.kind === 'block' && QUESTION_TYPES.has(it.block.type) && it.block.answer == null ? { ...it, block: { ...it.block, answer: label } } : it)) }));
 
+  async function pickPhoto(file) {
+    if (!file) return;
+    setPhotoError('');
+    try {
+      setPhoto(await shrinkPhoto(file));
+    } catch (err) {
+      setPhotoError(err.message || 'این عکس باز نشد.');
+    }
+  }
+
   function ask(message) {
     const text = message.trim();
-    if (!text || busy) return;
+    const image = photo;
+    if ((!text && !image) || busy) return;
     setDraft('');
+    setPhoto(null);
+    if (image) {
+      // A photo always starts its own turn: «این چیه، قیمتش منصفانه‌ست؟»
+      const query = text || 'این عکس';
+      setTurns((all) => [...all, { id: crypto.randomUUID(), query, image, items: [], status: 'working', steps: [] }]);
+      setChats(touchChat(threadId, text || '📷 عکس برچسب'));
+      return run({ message: text, image });
+    }
     if (question) {
       // Typing while a question is open answers it in your own words.
       markAnswered(text);
@@ -230,7 +275,20 @@ export default function App() {
 
   const ctx = origin.lat != null ? { lat: origin.lat, lon: origin.lon } : {};
   const empty = turns.length === 0;
-  const composer = <Composer inputRef={inputRef} draft={draft} setDraft={setDraft} onSend={() => ask(draft)} busy={busy} placeholder={question ? 'یا جوابت رو اینجا بنویس…' : 'پیامت رو بنویس…'} />;
+  const composer = (
+    <Composer
+      inputRef={inputRef}
+      draft={draft}
+      setDraft={setDraft}
+      onSend={() => ask(draft)}
+      busy={busy}
+      placeholder={photo ? 'یه توضیح کوتاه (اختیاری)، مثلاً «اینجا اینو می‌دن»' : question ? 'یا جوابت رو اینجا بنویس…' : 'پیامت رو بنویس…'}
+      photo={photo}
+      photoError={photoError}
+      onPhoto={pickPhoto}
+      onClearPhoto={() => setPhoto(null)}
+    />
+  );
 
   return (
     <div className={`app${empty ? ' is-empty' : ''}${drawerOpen ? ' has-drawer' : ''}`}>
@@ -278,7 +336,7 @@ export default function App() {
             <h1>{name ? `سلام ${name}! بریم ترب بچینیم؟` : 'من ترب‌چینم، دستیار خرید حضوریت'}</h1>
             <p className="welcome-sub">مدل مناسب رو پیدا کن، نزدیک‌ترین مغازه‌های تهران رو مقایسه کن و مسیر رفتن بگیر.</p>
             {composer}
-            {/* <p className="welcome-hints">جست‌وجو · مقایسه · مغازه‌های نزدیک · مسیر رفتن · ترب جمع کن</p>*/}
+            {/* <p className="welcome-hints">جست‌وجو، مقایسه، مغازه‌های نزدیک، مسیر رفتن، ترب جمع کن</p>*/}
             <div className="welcome-examples" role="group" aria-label="نمونه‌ها">
               {EXAMPLES.map((q) => (
                 <button key={q} type="button" className="example-chip" onClick={() => ask(q)}>
@@ -326,8 +384,30 @@ export default function App() {
         )}
       </Sheet>
 
+      <Sheet open={!!shopOpen} title={shopOpen?.name || 'مغازه'} onClose={() => setShopOpen(null)} tall>
+        {shopOpen && (
+          <ShopPage
+            key={shopOpen.shopId}
+            shopId={shopOpen.shopId}
+            threadId={threadId}
+            ctx={origin.lat != null ? origin : null}
+            busy={busy}
+            inSheet
+            onAsk={(q) => {
+              setShopOpen(null);
+              ask(q);
+            }}
+          />
+        )}
+      </Sheet>
+
       <Sheet open={profileOpen} title="انبار ترب‌هات" onClose={() => setProfileOpen(false)} tall>
-        {profileOpen && <Profile name={name} onRename={setName} />}
+        {profileOpen && (
+          <>
+            <ThemeSwitch />
+            <Profile name={name} onRename={setName} />
+          </>
+        )}
       </Sheet>
 
       <Drawer open={drawerOpen} chats={chats} currentId={threadId} onClose={() => setDrawerOpen(false)} onSelect={openChat} onNew={startOver} onDelete={deleteChat} onProfile={() => setProfileOpen(true)} />
@@ -336,16 +416,69 @@ export default function App() {
   );
 }
 
-function Composer({ inputRef, draft, setDraft, onSend, busy, placeholder }) {
+function Composer({ inputRef, draft, setDraft, onSend, busy, placeholder, photo, photoError, onPhoto, onClearPhoto }) {
+  const fileRef = useRef(null);
+  const before = useRef('');
+  // Speech fills the box; the user reads it and sends (nothing is sent on its own).
+  const voice = useVoice((text) => setDraft(before.current ? `${before.current} ${text}` : text));
   return (
     <form
-      className="composer"
+      className={`composer${photo ? ' has-photo' : ''}`}
       role="search"
       onSubmit={(e) => {
         e.preventDefault();
         onSend();
       }}
     >
+      {photo && (
+        <div className="composer-photo">
+          <img src={photo} alt="عکسی که می‌فرستی" />
+          <button type="button" className="composer-photo-x" onClick={onClearPhoto} aria-label="حذف عکس">
+            ×
+          </button>
+        </div>
+      )}
+      {photoError && (
+        <p className="inline-error composer-photo-error" role="alert">
+          {photoError}
+        </p>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          onPhoto(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+      <button type="button" className="composer-cam" onClick={() => fileRef.current?.click()} disabled={busy} aria-label="عکس از برچسب قیمت یا کالا" title="عکس از برچسب قیمت یا کالا">
+        <CameraIcon size={20} />
+      </button>
+      {voiceSupported && (
+        <button
+          type="button"
+          className={`composer-cam${voice.listening ? ' is-listening' : ''}`}
+          onClick={() => {
+            if (voice.listening) return voice.stop();
+            before.current = draft.trim();
+            voice.start();
+          }}
+          disabled={busy}
+          aria-pressed={voice.listening}
+          aria-label={voice.listening ? 'تموم شد' : 'بگو، بنویسم'}
+          title={voice.listening ? 'تموم شد' : 'بگو، بنویسم'}
+        >
+          <MicIcon size={20} />
+        </button>
+      )}
+      {voice.error && (
+        <p className="inline-error composer-photo-error" role="alert">
+          {voice.error}
+        </p>
+      )}
       <label htmlFor="q" className="sr-only">
         پیام
       </label>
@@ -365,7 +498,7 @@ function Composer({ inputRef, draft, setDraft, onSend, busy, placeholder }) {
         maxLength={1000}
         enterKeyHint="send"
       />
-      <button type="submit" className="send" disabled={busy || !draft.trim()} aria-label="بفرست">
+      <button type="submit" className="send" disabled={busy || (!draft.trim() && !photo)} aria-label="بفرست">
         <ArrowUpIcon size={18} />
       </button>
     </form>
@@ -378,9 +511,13 @@ function Turn({ turn, isLast, threadId, ctx, busy, onAsk, onRetry, answer }) {
   const working = turn.status === 'working';
   return (
     <article className="turn" aria-label={turn.query}>
-      <p className="user-msg">{turn.query}</p>
+      <div className="user-msg">
+        {turn.image && <img className="user-photo" src={turn.image} alt="عکسی که فرستادی" />}
+        {turn.query !== 'این عکس' && <p>{turn.query}</p>}
+        {turn.photoReading && <p className="photo-reading">{turn.photoReading.replace(/^\[|\]$/g, '')}</p>}
+      </div>
       <StepsPill steps={turn.steps} working={working} started={turn.started} blocks={blocks} />
-      {working && blocks.length === 0 && !turn.stream && (
+      {working && blocks.length === 0 && !turn.stream && !turn.pending && (
         <div className="thinking" role="status">
           <Mascot mood="think" size={40} />
           <span>ترب‌چین داره برات می‌گرده…</span>
@@ -400,6 +537,19 @@ function Turn({ turn, isLast, threadId, ctx, busy, onAsk, onRetry, answer }) {
         .map((it) => (
           <RewardNote key={it.reward.id} reward={it.reward} />
         ))}
+      {working && turn.pending && (
+        <div className="card skeleton" role="status" aria-label={turn.pending}>
+          <span className="skeleton-line w60" />
+          <span className="skeleton-line w90" />
+          <span className="skeleton-line w75" />
+          <span className="skeleton-note">{turn.pending}</span>
+        </div>
+      )}
+      {working && !turn.pending && blocks.length > 0 && !turn.stream && (
+        <p className="summarising" role="status">
+          <Mascot mood="think" size={24} /> داره جمع‌بندی می‌کنه…
+        </p>
+      )}
       {turn.status === 'error' && (
         <div className="card notice" role="alert">
           <Mascot mood="worried" size={40} />
@@ -413,7 +563,7 @@ function Turn({ turn, isLast, threadId, ctx, busy, onAsk, onRetry, answer }) {
   );
 }
 
-/** "۴ جست‌وجو · ۸ مغازه" — what the agent did for this answer, expandable to every step. */
+/** "۴ جست‌وجو، ۸ مغازه" — what the agent did for this answer, expandable to every step. */
 function StepsPill({ steps, working, started, blocks }) {
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -430,7 +580,7 @@ function StepsPill({ steps, working, started, blocks }) {
     <div className="steps">
       <button type="button" className="steps-pill" aria-expanded={open} onClick={() => setOpen(!open)} disabled={!steps.length}>
         {working ? <span className="spinner" aria-hidden="true" /> : <SearchIcon size={14} />}
-        <span>{working ? `${steps[steps.length - 1] || 'در حال فکر کردن'} · ${toFaDigits(Math.max(0, Math.round((now - (started || now)) / 1000)))} ثانیه` : parts.join(' · ')}</span>
+        <span>{working ? `${steps[steps.length - 1] || 'در حال فکر کردن'}، ${toFaDigits(Math.max(0, Math.round((now - (started || now)) / 1000)))} ثانیه` : parts.join('، ')}</span>
         {steps.length > 0 && (
           <span className="steps-more">
             {open ? 'بستن' : 'دیدن مراحل'}

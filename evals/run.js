@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // Run: npm run eval            (all scenarios)
 //      npm run eval -- near-me  (by id)
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -26,7 +27,9 @@ async function runScenario(s) {
       if (e.type === 'ui') blocks.push(e.block), process.stdout.write(` [${e.block.type}]`);
       if (e.type === 'interrupt') process.stdout.write(` ⏸${e.block.type}`);
     };
-    let r = await runTurn({ threadId, userId, channel: 'eval', message: turn.message, ctx: turn.ctx }, collect);
+    // A turn may carry a photo (path relative to evals/), sent like the web client does: a JPEG data URL.
+    const image = turn.image ? `data:image/jpeg;base64,${readFileSync(new URL(turn.image, import.meta.url)).toString('base64')}` : undefined;
+    let r = await runTurn({ threadId, userId, channel: 'eval', message: turn.message, ctx: turn.ctx, image }, collect);
     for (let i = 0; r.type === 'interrupt' && i < 4; i++) {
       interrupts.push(r.block.type);
       let answer = s.autoResume?.[r.block.type];

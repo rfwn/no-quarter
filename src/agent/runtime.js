@@ -16,8 +16,9 @@ import { startTrace, finishTrace } from '../harness/tracer.js';
 import { gate, MESSAGES } from '../governance/policy.js';
 import { coarsenCtx, hashId, phoneKey } from '../governance/privacy.js';
 import { audit } from '../governance/audit.js';
-import { shopProfile, getProduct, findOffers, categoryShopsNear } from '../data/catalog.js';
+import { shopPage, getProduct, findOffers, categoryShopsNear } from '../data/catalog.js';
 import { shopBoardBlock } from './tools.js';
+import { photoText, readPhoto } from './model.js';
 
 // "Where am I?" is answered by the harness from state, not the model: the model kept treating it as
 // off-topic or claiming the location was unknown even when it was set.
@@ -34,10 +35,17 @@ export async function pendingInterrupt(threadId) {
  * @param {{threadId: string, userId: string, channel?: string, message?: string, resume?: object, ctx?: object}} input
  * @param {(event: object) => void} emit
  */
-export async function runTurn({ threadId, userId, channel = 'web', message, resume, ctx }, emit = () => {}) {
+export async function runTurn({ threadId, userId, channel = 'web', message, resume, ctx, image }, emit = () => {}) {
   const userHash = hashId(userId);
   const threadHash = hashId(threadId);
-  const text = typeof message === 'string' ? message.trim() : '';
+  let text = typeof message === 'string' ? message.trim() : '';
+  // A photo (price tag / product) is read into text first; the image itself is not kept anywhere.
+  if (image) {
+    emit({ type: 'step', label: 'خوندن عکس' });
+    const reading = photoText(await readPhoto(image));
+    text = text ? `${text}\n${reading}` : `${reading}\nاین چیه و قیمتش منصفانه‌ست؟`;
+    emit({ type: 'photo', text: reading });
+  }
 
   const verdict = await gate({ userHash, message: text, threadHash });
   if (!verdict.ok) {
@@ -132,11 +140,12 @@ export async function getThread(threadId) {
 }
 
 /** Shop profile for the UI's call/details buttons: no model round-trip; the phone becomes a grounded fact. */
-export async function getShopForThread(threadId, shopId) {
-  const profile = shopProfile(shopId);
-  if (!profile) return null;
+export async function getShopForThread(threadId, shopId, { query = '', category = null, offset = 0, ctx = null } = {}) {
   const cfg = threadConfig(threadId);
   const snap = await graph.getState(cfg);
+  const c = coarsenCtx(ctx || snap.values?.ctx || {});
+  const profile = shopPage(shopId, { origin: c.lat != null ? { lat: c.lat, lon: c.lon } : null, query: String(query).slice(0, 60), category, offset: Math.max(0, Number(offset) || 0) });
+  if (!profile) return null;
   // Persist so later answers can cite this phone — only when the graph isn't paused mid-turn.
   if (profile.phone && snap.values?.messages?.length && !snap.next?.length) {
     await graph.updateState(cfg, { facts: { prices: [], phones: [phoneKey(profile.phone)] } }, 'verify');

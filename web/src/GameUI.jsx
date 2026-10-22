@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react';
 import { BADGES, MISSION_STEPS, getGame, levelOf, subscribe } from './game.js';
 import { faNum, shortToman, toFaDigits } from './format.js';
-import { ChatIcon, CheckIcon, MapIcon, RouteIcon, ScaleIcon, SearchIcon, SparkIcon, StarIcon, TagIcon } from './Icons.jsx';
+import { ChatIcon, CheckIcon, MapIcon, MonitorIcon, MoonIcon, RouteIcon, ScaleIcon, SearchIcon, SparkIcon, StarIcon, SunIcon, TagIcon } from './Icons.jsx';
 import Mascot from './Mascot.jsx';
+import { THEMES, getTheme, setTheme } from './theme.js';
 
 export function useGame() {
   const [state, setState] = useState(getGame);
@@ -98,6 +99,42 @@ export function MissionBar({ onNew }) {
 
 // ---------- profile ----------
 
+const THEME_ICON = { light: SunIcon, dark: MoonIcon, system: MonitorIcon };
+
+/** TorobChat's «پوسته» control: three equal segments on an elevated track. */
+export function ThemeSwitch() {
+  const [pref, setPref] = useState(getTheme);
+  return (
+    <section className="theme-switch-wrap" aria-labelledby="theme-title">
+      <h3 id="theme-title" className="theme-title">
+        پوسته
+      </h3>
+      <p className="theme-sub">حالت نمایش رو انتخاب کن.</p>
+      <div className="theme-switch" role="radiogroup" aria-labelledby="theme-title">
+        {THEMES.map(({ value, label }) => {
+          const Icon = THEME_ICON[value];
+          return (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={pref === value}
+              className="theme-opt"
+              onClick={() => {
+                setTheme(value);
+                setPref(value);
+              }}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function Profile({ name, onRename }) {
   const g = useGame();
   const lvl = levelOf(g.xp);
@@ -134,12 +171,12 @@ export function Profile({ name, onRename }) {
         <Mascot mood="happy" size={88} />
         <div>
           <p className="profile-level">
-            سطح {toFaDigits(lvl.index + 1)} · {lvl.name}
+            سطح {toFaDigits(lvl.index + 1)}، {lvl.name}
           </p>
           <div className="xp-bar" role="progressbar" aria-valuemin={lvl.min} aria-valuemax={lvl.next ?? g.xp} aria-valuenow={g.xp}>
             <span style={{ transform: `scaleX(${lvl.progress})` }} />
           </div>
-          <p className="muted small">{lvl.next ? `${faNum(g.xp)} از ${faNum(lvl.next)} ترب تا سطح بعد` : `${faNum(g.xp)} ترب · بالاترین سطح`}</p>
+          <p className="muted small">{lvl.next ? `${faNum(g.xp)} از ${faNum(lvl.next)} ترب تا سطح بعد` : `${faNum(g.xp)} ترب، بالاترین سطح`}</p>
         </div>
       </div>
 
@@ -184,7 +221,7 @@ export function Profile({ name, onRename }) {
 export function rewardFor(e) {
   if (!e || e.action === 'reset') return null;
   const badge = (e.badges || [])[0];
-  if (e.missionDone) return { kind: 'mission', title: 'سبدت پر شد!', text: `برنامه‌ی خرید آماده‌ست · +${toFaDigits(e.xp)} ترب` };
+  if (e.missionDone) return { kind: 'mission', title: 'سبدت پر شد!', text: `برنامه‌ی خرید آماده‌ست، +${toFaDigits(e.xp)} ترب` };
   if (e.levelUp) return { kind: 'level', title: `رسیدی به سطح ${toFaDigits(e.levelUp.index + 1)}: ${e.levelUp.name}`, text: 'ترب‌های بیشتری منتظرتن!' };
   if (badge) return { kind: 'badge', badge: badge.id, title: `نشان تازه: ${badge.name}`, text: badge.got };
   if (e.action === 'saving' && e.saving > 0) return { kind: 'saving', title: `${shortToman(e.saving)} تومان زیر میانه`, text: e.shopName ? `یه ترب درشت از ${e.shopName} چیدی` : 'نسبت به میانه‌ی قیمت‌های ثبت‌شده' };

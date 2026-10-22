@@ -3,6 +3,10 @@ import { fetchShop, refilterOffers } from './api.js';
 import { cleanTitle, faDate, formatKm, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, CheckIcon, ChevronIcon, InfoIcon, MapIcon, PhoneIcon, RouteIcon, TagIcon } from './Icons.jsx';
 import MapView from './MapView.jsx';
+import { openShop } from './shopSheet.js';
+import { Src } from './Source.jsx';
+import { TypeFacts } from './TypeCard.jsx';
+import { SellerClaims, TimeHint, WarrantyText } from './Buying.jsx';
 import { record, recordSaving } from './game.js';
 import Sheet from './Sheet.jsx';
 
@@ -73,9 +77,10 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
           {product.image && <img className="product-img" src={product.image} alt="" width="64" height="64" />}
           <div className="product-meta">
             <h3 className="product-title">{cleanTitle(product.title)}</h3>
+            {product.card && <TypeFacts card={product.card} max={4} />}
             <p className="product-sub">
               <span className="nowrap">{toFaDigits(block.matched)} مغازه</span>
-              {block.price_range && <span className="nowrap"> · {rangeText(block.price_range.min, block.price_range.max)}</span>}
+              {block.price_range && <span className="nowrap">، {rangeText(block.price_range.min, block.price_range.max)}</span>}
             </p>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => (record('map'), setMapOpen(true))} disabled={!offers.length}>
@@ -106,6 +111,8 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
         </div>
       )}
       {budgetOpen && <BudgetField value={filters.max_price} onChange={(v) => (setBudgetOpen(false), apply({ ...filters, max_price: v }))} />}
+
+      <TimeHint time={block.time} />
 
       <p className="data-note">
         <InfoIcon size={16} />
@@ -160,7 +167,7 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
               <li key={s.shop_id} className="maybe-row">
                 <span className="row-title">{s.shop_name}</span>
                 <span className="row-sub">
-                  {s.distance_km != null ? `${formatKm(s.distance_km)} · ` : ''}
+                  {s.distance_km != null ? `${formatKm(s.distance_km)}، ` : ''}
                   {openState(s.open).text}
                 </span>
               </li>
@@ -218,7 +225,7 @@ function BudgetField({ value, onChange }) {
   );
 }
 
-// "شنبه تا پنج‌شنبه ۰۹:۳۰–۲۱:۰۰ · جمعه تعطیل" instead of seven identical lines.
+// "شنبه تا پنج‌شنبه ۰۹:۳۰–۲۱:۰۰، جمعه تعطیل" instead of seven identical lines.
 function groupWeek(week) {
   const groups = [];
   for (const d of week) {
@@ -255,6 +262,7 @@ function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheap
   const [error, setError] = useState('');
   const open = openState(o.open);
   const stale = o.price_freshness === 'stale' || o.price_freshness === 'unknown';
+  const payText = [o.torobpay_in_person && 'ترب‌پی حضوری', ...(o.installments || []).map((p) => `اقساط ${p}`)].filter(Boolean).join('، ');
 
   async function loadShop() {
     if (shop || state === 'loading') return shop;
@@ -328,20 +336,32 @@ function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheap
             <dt>قیمت ثبت‌شده</dt>
             <dd>
               {o.price != null ? `${toFaDigits(o.price.toLocaleString('en'))} تومان` : 'ثبت نشده'}
-              <span className="muted"> · {priceAge(o.price_age_days)}</span>
+              <span className="muted">، {priceAge(o.price_age_days)}</span> <Src kind="torob" />
             </dd>
           </div>
           <div>
             <dt>موجودی</dt>
-            <dd className="warn">تأیید نشده</dd>
+            <dd>
+              معلوم نیست <Src kind="unverified" />
+            </dd>
           </div>
           <div>
             <dt>گارانتی</dt>
-            <dd>{o.warranty ? `${o.warranty.provider}${o.warranty.months ? ` · ${toFaDigits(o.warranty.months)} ماه` : ''}` : <span className="muted">نامشخص</span>}</dd>
+            <dd>
+              <WarrantyText kind={o.warranty_kind} />
+            </dd>
           </div>
           <div>
             <dt>پرداخت</dt>
-            <dd>{[o.torobpay_in_person && 'ترب‌پی حضوری', ...(o.installments || []).map((p) => `اقساط ${p}`)].filter(Boolean).join('، ') || <span className="muted">نامشخص</span>}</dd>
+            <dd>
+              {payText ? (
+                <>
+                  {payText} <Src kind="seller" />
+                </>
+              ) : (
+                <span className="muted">نامشخص</span>
+              )}
+            </dd>
           </div>
           <div>
             <dt>آدرس</dt>
@@ -362,10 +382,13 @@ function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheap
           {o.description && (
             <div>
               <dt>توضیح فروشنده</dt>
-              <dd className="note">{o.description}</dd>
+              <dd className="note">
+                {o.description} <Src kind="seller" />
+              </dd>
             </div>
           )}
         </dl>
+        <SellerClaims claims={o.seller_claims} />
 
         <div className="actions">
           <button type="button" className="btn btn-primary" onClick={call} disabled={state === 'loading'}>
@@ -378,6 +401,9 @@ function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheap
               مسیر
             </a>
           )}
+          <button type="button" className="btn btn-ghost" onClick={() => openShop(o.shop_id, o.shop_name)}>
+            صفحه‌ی مغازه
+          </button>
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => onAsk(`از «${o.shop_name}» بپرس «${o.seller_title || 'این کالا'}» را الان موجود دارد و قیمتش چند است`)}>
             <ChatIcon size={18} />
             بپرس موجود دارد؟
@@ -406,9 +432,10 @@ export function ProductList({ block, onPick, disabled }) {
               <span className="thumb">{p.image && <img src={p.image} alt="" loading="lazy" width="56" height="56" />}</span>
               <span className="row-text">
                 <span className="row-title product-name">{p.title}</span>
+                {p.card && <TypeFacts card={p.card} max={3} />}
                 <span className="row-sub">
                   {p.shops ? `${toFaDigits(p.shops)} مغازه` : 'مغازه‌ای ثبت نکرده'}
-                  {p.nearest_km != null ? ` · نزدیک‌ترین ${formatKm(p.nearest_km)}` : ''}
+                  {p.nearest_km != null ? `، نزدیک‌ترین ${formatKm(p.nearest_km)}` : ''}
                 </span>
               </span>
               <span className="row-price">

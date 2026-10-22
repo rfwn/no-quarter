@@ -1353,3 +1353,848 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+/* ---------- Source labels ---------- */
+
+.src {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  vertical-align: 1px;
+  cursor: help;
+}
+
+.src-unverified,
+.src-category {
+  border-color: color-mix(in srgb, var(--reward) 45%, var(--line));
+  color: var(--reward-ink);
+}
+
+.src-you,
+.src-site {
+  border-color: color-mix(in srgb, var(--action) 35%, var(--line));
+  color: var(--action-ink);
+}
+
+/* ---------- Shop page ---------- */
+
+.shop-link {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+}
+
+.shop-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.shop-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.shop-page.in-sheet {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.shop-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.shop-where,
+.shop-status {
+  margin: 0;
+  font-size: 14px;
+}
+
+.shop-where {
+  color: var(--ink-2);
+}
+
+.shop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shop-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 0;
+  border-block: 1px solid var(--line);
+}
+
+.shop-facts div {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.shop-facts dt {
+  flex-shrink: 0;
+  width: 76px;
+  color: var(--muted);
+}
+
+.shop-facts dd {
+  margin: 0;
+}
+
+.shop-facts .week {
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shop-sub {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.shop-items .row-line {
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.shop-item-img {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--elevated);
+  object-fit: contain;
+}
+
+.shop-items .row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-page .data-note {
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- Photo of a price tag / product ---------- */
+
+.composer {
+  flex-wrap: wrap;
+}
+
+.composer-cam {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  color: var(--muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.composer-cam:hover:not(:disabled) {
+  background: var(--elevated);
+  color: var(--ink);
+}
+
+.composer-photo {
+  position: relative;
+  flex-basis: 100%;
+  width: 72px;
+  max-width: 72px;
+  height: 72px;
+  margin: 4px 0 2px;
+}
+
+.composer-photo img {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.composer-photo-x {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: -6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.composer-photo-error {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
+
+.user-msg p {
+  margin: 0;
+}
+
+.user-photo {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.photo-reading {
+  margin-top: 4px !important;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--ink-2);
+}
+
+/* ---------- Product-type facts (phone / laptop / shoes / clothes …) ---------- */
+
+.type-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: 4px;
+}
+
+.type-fact {
+  display: inline-flex;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--elevated);
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.type-fact-label {
+  color: var(--muted);
+}
+
+.type-fact.is-focus {
+  background: var(--action-soft);
+  color: var(--action-ink);
+}
+
+.type-fact.is-focus .type-fact-label {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.type-badge {
+  display: inline-flex;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--reward-soft);
+  color: var(--reward-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.type-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  flex-basis: 100%;
+}
+
+.size-chip {
+  min-width: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.type-colors {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- Model vs model ---------- */
+
+.pcmp {
+  padding: 16px;
+}
+
+.pcmp-heads,
+.pcmp-row dd,
+.pcmp-actions {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pcmp-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.pcmp-head img,
+.pcmp-noimg {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  background: var(--elevated);
+  object-fit: contain;
+}
+
+.pcmp-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pcmp-badges {
+  margin: 0;
+}
+
+.pcmp-rows {
+  margin: 14px 0 0;
+}
+
+.pcmp-row {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.pcmp-row dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pcmp-row dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.pcmp-row dd > span {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.pcmp-row .is-best {
+  font-weight: 700;
+}
+
+.pcmp-row .is-best svg {
+  display: inline-block;
+  margin-inline-end: 3px;
+  vertical-align: -1px;
+}
+
+.pcmp-row.is-focus {
+  background: var(--action-soft);
+  margin-inline: -16px;
+  padding-inline: 16px;
+}
+
+.pcmp-focus {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--on-action);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.pcmp-actions {
+  margin-top: 12px;
+}
+
+.pcmp .data-note {
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+/* ---------- Buying know-how ---------- */
+
+.bargain {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--elevated);
+}
+
+.bargain-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bargain-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bargain-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--bg);
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.bargain-steps strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.bargain-steps .is-stop strong {
+  color: var(--action-ink);
+}
+
+.bargain-tips {
+  margin: 10px 0 0;
+  padding-inline-start: 18px;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--ink-2);
+}
+
+.cmp-bargain {
+  padding: 0 16px 12px;
+}
+
+.claims {
+  margin-top: 8px;
+}
+
+.claims-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.claim {
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.claim[aria-expanded='true'] {
+  background: var(--elevated);
+}
+
+.claim.is-warn {
+  border-color: var(--action);
+  color: var(--action-ink);
+}
+
+.claim-explain {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--ink-2);
+}
+
+.warranty-warn {
+  color: var(--reward-ink);
+}
+
+.warranty-note {
+  font-size: 12px;
+}
+
+.time-hint {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--reward-ink);
+  background: var(--reward-soft);
+}
+
+/* ---------- Waiting, made visible ---------- */
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--elevated) 0%, var(--line) 50%, var(--elevated) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w75 { width: 75%; }
+.skeleton-line.w90 { width: 90%; }
+
+.skeleton-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.summarising {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.summarising .mascot {
+  width: 24px;
+  height: 24px;
+}
+
+.composer-cam.is-listening {
+  background: var(--action);
+  color: var(--on-action);
+  animation: listen 1.2s ease-in-out infinite;
+}
+
+@keyframes listen {
+  50% { box-shadow: 0 0 0 6px var(--action-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .composer-cam.is-listening {
+    animation: none;
+  }
+}
+
+/* ---------- Shopping list: several items, one trip ---------- */
+
+.slist {
+  padding: 16px;
+}
+
+.slist-head .card-title {
+  margin: 0 0 8px;
+}
+
+.slist-items {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slist-items li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.slist-items img,
+.slist-noimg {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--elevated);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.slist-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slist-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.slist-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: start;
+  background: var(--bg);
+}
+
+.slist-tab[aria-selected='true'] {
+  border-color: var(--action);
+  background: var(--action-soft);
+}
+
+.slist-tab-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.slist-tab-meta {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.slist-cover {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.slist-cover.is-partial {
+  color: var(--reward-ink);
+  font-weight: 700;
+}
+
+.slist-option {
+  margin-top: 14px;
+}
+
+.slist-summary {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.slist-missing {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--reward-soft);
+  color: var(--reward-ink);
+  font-size: 13px;
+}
+
+.slist-stops {
+  margin: 0 0 12px;
+  padding-inline-start: 20px;
+}
+
+.slist-stops > li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.slist-shop {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.slist-stop-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slist-stop-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.slist-stop-items li span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slist-price {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.slist .data-note {
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+/* Phones: the rail is a transparent bar over the header — only its own buttons take taps, so the
+   location pill and title underneath stay usable. */
+@media (max-width: 720px) {
+  .rail {
+    pointer-events: none;
+  }
+
+  .rail > * {
+    pointer-events: auto;
+  }
+}
+
+/* Visual-pass fixes (phone, 2026-10-22) */
+.slist-items {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.slist-items li {
+  min-width: 0;
+}
+
+.slist-items li .muted {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.slist-stops > li,
+.slist-stop-items li {
+  min-width: 0;
+}
+
+/* Source chips sit inside the sentence, not as flex columns. */
+.shop-page .data-note,
+.pcmp .data-note,
+.slist .data-note {
+  display: block;
+  line-height: 26px;
+}
+
+/* "Matters to you" specs: emphasised, not alarming (red is for things you press). */
+.type-fact.is-focus {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-weight: 700;
+}
+
+.type-fact.is-focus .type-fact-label {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.pcmp-row.is-focus {
+  background: var(--elevated);
+}
+
+.pcmp-focus {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ---------- Theme switch (TorobChat «پوسته»: grid-cols-3 gap-1 rounded-xl bg-elevated p-1) ---------- */
+
+.theme-switch-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.theme-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.theme-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.theme-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--elevated);
+}
+
+.theme-opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.theme-opt:hover {
+  color: var(--ink);
+}
+
+.theme-opt[aria-checked='true'] {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}

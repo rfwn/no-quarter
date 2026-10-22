@@ -8,12 +8,21 @@ import { BackIcon, ChatIcon, CheckIcon, LinkIcon, LocateIcon, MapIcon, PhoneIcon
 import MapView from './MapView.jsx';
 import Sheet from './Sheet.jsx';
 import LocationPicker from './Location.jsx';
+import ShopPage from './ShopPage.jsx';
+import { ProductCompare } from './TypeCard.jsx';
+import ShoppingList from './ShoppingList.jsx';
+import { BargainRange, SellerClaims } from './Buying.jsx';
+import { openShop } from './shopSheet.js';
+import { Src } from './Source.jsx';
 
 // ---------- inline results ----------
 
 const INLINE = {
   shop_board: (p) => <ShopList {...p} />,
   nearby_shops: (p) => <NearbyShops {...p} />,
+  product_compare: (p) => <ProductCompare {...p} />,
+  shopping_list: (p) => <ShoppingList {...p} />,
+  shop_profile: ({ block, threadId, ctx, onAsk, busy }) => <ShopPage shop={block.shop} threadId={threadId} ctx={ctx} onAsk={onAsk} busy={busy} />,
   product_list: ({ block, busy, onAsk }) => <ProductList block={block} disabled={busy} onPick={(p) => onAsk(`مغازه‌های نزدیک «${p.title}» رو نشونم بده`)} />,
   price_verdict: (p) => <PriceVerdict {...p} />,
   compare: (p) => <Compare {...p} />,
@@ -79,7 +88,7 @@ function PriceVerdict({ block }) {
       <p className="muted small">{block.product_title}</p>
       <p className="verdict-line">
         پیشنهاد فروشنده <strong><Toman n={block.offered_price_toman} /></strong>
-        {diff !== 0 && <span className="muted"> · {shortToman(Math.abs(diff))} {diff > 0 ? 'بالاتر' : 'پایین‌تر'} از میانه</span>}
+        {diff !== 0 && <span className="muted">، {shortToman(Math.abs(diff))} {diff > 0 ? 'بالاتر' : 'پایین‌تر'} از میانه</span>}
       </p>
       <div className="range" role="img" aria-label={`قیمت پیشنهادی در مقایسه با ${s.count} قیمت ثبت‌شده`}>
         <span className="range-band" style={{ insetInlineStart: `${pos(s.min)}%`, width: `${pos(s.max) - pos(s.min)}%` }} />
@@ -88,10 +97,11 @@ function PriceVerdict({ block }) {
       </div>
       <div className="range-legend">
         <span>{shortToman(s.min)}</span>
-        <span>میانه {shortToman(s.median)} · {toFaDigits(s.count)} مغازه</span>
+        <span>میانه {shortToman(s.median)}، {toFaDigits(s.count)} مغازه</span>
         <span>{shortToman(s.max)}</span>
       </div>
       <p className="muted small">{v.note}</p>
+      {block.verdict !== 'good' && <BargainRange bargain={block.bargain} tips={block.tips} />}
       {block.cheaper_within_1_5km?.length > 0 && (
         <div className="sub-list">
           <p className="sub-title">ارزان‌تر در همین نزدیکی</p>
@@ -100,7 +110,7 @@ function PriceVerdict({ block }) {
               <li key={o.offer_id} className="mini-row">
                 <span className="row-title">{o.shop_name}</span>
                 <span className="row-sub">
-                  <Toman n={o.price} /> · {formatKm(o.distance_km)} · {priceAge(o.price_age_days)}
+                  <Toman n={o.price} />، {formatKm(o.distance_km)}، {priceAge(o.price_age_days)}
                 </span>
               </li>
             ))}
@@ -156,7 +166,7 @@ function tradeoff(pick, offers) {
 }
 
 const warrantyText = (w) => (w ? `${w.provider}${w.months ? ` ${toFaDigits(w.months)} ماه` : ''}` : null);
-const answerText = (a) => `${a.in_stock === true ? 'موجوده' : a.in_stock === false ? 'ناموجوده' : 'نامعلوم'}${a.price_toman ? ` · ${shortToman(a.price_toman)}` : ''}`;
+const answerText = (a) => `${a.in_stock === true ? 'موجوده' : a.in_stock === false ? 'ناموجوده' : 'نامعلوم'}${a.price_toman ? `، ${shortToman(a.price_toman)}` : ''}`;
 
 function Compare({ block, onAsk, busy }) {
   const { offers, best = {}, answers = {} } = block;
@@ -188,12 +198,13 @@ function Compare({ block, onAsk, busy }) {
           const a = answers[o.offer_id];
           const pay = [o.torobpay_in_person && 'ترب‌پی', ...(o.installments || [])].filter(Boolean);
           const facts = [
-            ['رفتن', o.distance_km != null ? `${formatKm(o.distance_km)} · ${travel(o.distance_km)}` : 'فاصله نامعلوم'],
+            ['رفتن', o.distance_km != null ? `${formatKm(o.distance_km)}، ${travel(o.distance_km)}` : 'فاصله نامعلوم'],
             ['ساعت کاری', open.text, `status status-${open.tone}`],
-            ['قیمت', `${priceAge(o.price_age_days)}${stale ? ' — بهتره قبلش بپرسی' : ''}`, stale ? 'is-stale' : ''],
-            ['گارانتی', warrantyText(o.warranty)],
-            ['پرداخت', pay.join('، ') || null],
-            ['جواب مغازه', a ? answerText(a) : null],
+            ['قیمت', `${priceAge(o.price_age_days)}${stale ? ' — بهتره قبلش بپرسی' : ''}`, stale ? 'is-stale' : '', 'torob'],
+            ['موجودی', a ? null : 'معلوم نیست', '', 'unverified'],
+            ['گارانتی', o.warranty_kind?.label || warrantyText(o.warranty), o.warranty_kind && ['test_only', 'none'].includes(o.warranty_kind.kind) ? 'is-stale' : '', o.warranty_kind?.kind === 'unknown' ? null : 'seller'],
+            ['پرداخت', pay.join('، ') || null, '', 'seller'],
+            ['جواب مغازه', a ? answerText(a) : null, '', 'you'],
           ].filter(([, v]) => v);
           return (
             <li key={o.offer_id} className={`cmp-shop${i === 0 ? ' is-pick' : ''}`}>
@@ -201,7 +212,9 @@ function Compare({ block, onAsk, busy }) {
                 <div>
                   <p className="cmp-name">
                     {i === 0 && <span className="cmp-badge">پیشنهاد</span>}
-                    {o.shop_name}
+                    <button type="button" className="shop-link" onClick={() => openShop(o.shop_id, o.shop_name)}>
+                      {o.shop_name}
+                    </button>
                   </p>
                   <p className="cmp-where">{o.passage ? `${o.passage}${o.floor_unit ? `، ${o.floor_unit}` : ''}` : o.area}</p>
                 </div>
@@ -222,13 +235,16 @@ function Compare({ block, onAsk, busy }) {
                 </ul>
               )}
               <dl className="cmp-facts">
-                {facts.map(([k, v, cls]) => (
+                {facts.map(([k, v, cls, src]) => (
                   <div key={k}>
                     <dt>{k}</dt>
-                    <dd className={cls || undefined}>{v}</dd>
+                    <dd className={cls || undefined}>
+                      {v} {src && <Src kind={src} />}
+                    </dd>
                   </div>
                 ))}
               </dl>
+              <SellerClaims claims={o.seller_claims} />
               <div className="cmp-actions">
                 {neshanHref(o) && (
                   <a className="btn btn-ghost btn-sm" href={neshanHref(o)} target="_blank" rel="noopener noreferrer" aria-label={`مسیر تا ${o.shop_name} در نشان`}>
@@ -250,6 +266,11 @@ function Compare({ block, onAsk, busy }) {
           );
         })}
       </ol>
+      {block.bargain && (
+        <div className="cmp-bargain">
+          <BargainRange bargain={block.bargain} />
+        </div>
+      )}
       <p className="data-note">پیشنهاد بر اساس قیمت ثبت‌شده، فاصله، تازگی قیمت و باز بودنه؛ موجودی رو مغازه باید تأیید کنه.</p>
     </section>
   );
@@ -275,7 +296,7 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
         <div>
           <h3 className="card-title">برنامه‌ی رفتن</h3>
           <p className="muted small">
-            {toFaDigits(block.stops.length)} مغازه · حدود {toFaDigits(block.total_minutes)} دقیقه با خرید
+            {toFaDigits(block.stops.length)} مغازه، حدود {toFaDigits(block.total_minutes)} دقیقه با خرید
           </p>
         </div>
         {block.leave_by && (
@@ -297,13 +318,17 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
             <span className="step-dot">{toFaDigits(i + 1)}</span>
             <div className="step-body">
               <p className="muted small">
-                {i === 0 ? 'از جات' : 'بعدش'} {s.mode === 'walk' ? 'پیاده' : 'با ماشین'} {toFaDigits(s.leg_minutes)} دقیقه · رسیدن {clockFa(s.arrive_at)}
+                {i === 0 ? 'از جات' : 'بعدش'} {s.mode === 'walk' ? 'پیاده' : 'با ماشین'} {toFaDigits(s.leg_minutes)} دقیقه، رسیدن {clockFa(s.arrive_at)}
               </p>
-              <p className="row-title">{s.shop_name}</p>
+              <p className="row-title">
+                <button type="button" className="shop-link" onClick={() => openShop(s.shop_id, s.shop_name)}>
+                  {s.shop_name}
+                </button>
+              </p>
               <p className="row-sub">{s.passage ? `${s.passage}${s.floor_unit ? `، ${s.floor_unit}` : ''}` : s.address}</p>
               <p className={`small plan-open plan-${s.open_at_arrival}`}>{arrivalNote(s)}</p>
               <p className="small">
-                <Toman n={s.price} /> <span className="muted">· {priceAge(s.price_age_days)}</span>
+                <Toman n={s.price} /> <span className="muted">، {priceAge(s.price_age_days)}</span>
               </p>
               {s.checks.length > 0 && (
                 <ul className="checks" aria-label="اونجا چک کن">
@@ -355,7 +380,7 @@ function InstagramEvidence({ block }) {
       <header className="card-head">
         <h3 className="card-title">اینستاگرام {block.shop_name}</h3>
         <span className="muted small">
-          @{block.username} · {toFaDigits(block.posts_checked)} پست اخیر
+          @{block.username}، {toFaDigits(block.posts_checked)} پست اخیر
         </span>
       </header>
       {block.matches.length === 0 ? (
@@ -366,7 +391,7 @@ function InstagramEvidence({ block }) {
             <li key={m.url || m.snippet} className="mini-row">
               <span className="small">
                 {m.age_days != null ? priceAge(m.age_days) : 'تاریخ نامشخص'}
-                {m.prices.length > 0 && <> · قیمت در پست: <Toman n={m.prices[0]} /></>}
+                {m.prices.length > 0 && <>، قیمت در پست: <Toman n={m.prices[0]} /></>}
               </span>
               <span className="note">{m.snippet}</span>
               {m.url && (
@@ -464,7 +489,7 @@ function Followup({ block, threadId, onAsk, busy }) {
             </p>
           )}
           {ex.note && <p className="muted small">{ex.note}</p>}
-          <p className="muted small">«{f.reply}» · به گفته‌ی خودت</p>
+          <p className="muted small">«{f.reply}»، به گفته‌ی خودت</p>
         </div>
       ) : (
         <>
@@ -558,7 +583,7 @@ function ChoiceQuestion({ block, onResume, busy }) {
                 {(o.min_price != null || o.shops != null) && (
                   <span className="row-sub">
                     {o.min_price != null && `از ${shortToman(o.min_price)} تومان`}
-                    {o.shops != null && ` · ${toFaDigits(o.shops)} مغازه`}
+                    {o.shops != null && `، ${toFaDigits(o.shops)} مغازه`}
                   </span>
                 )}
               </span>
@@ -618,7 +643,9 @@ function NearbyShops({ block, ctx, onAsk, busy }) {
                 <div className="row-main">
                   <span className="row-text">
                     <span className="row-title">
-                      {s.shop_name}
+                      <button type="button" className="shop-link" onClick={() => openShop(s.shop_id, s.shop_name)}>
+                        {s.shop_name}
+                      </button>
                       {i === 0 && origin && <span className="tag">نزدیک‌ترین</span>}
                     </span>
                     <span className="row-sub">{s.address || s.area}</span>

@@ -58,7 +58,7 @@ export default function MapView({ offers, origin, selectedIds = [], route = null
         const isCheapest = low != null && low === cheapest;
         const anyOpen = g.offers.some((o) => o.open?.status === 'open');
         // Shops without a price (a "kind of shop" search) are labelled by name.
-        const label = g.offers.length > 1 ? (low ? `${toFaDigits(g.offers.length)} مغازه · از ${shortToman(low)}` : `${toFaDigits(g.offers.length)} مغازه`) : low ? shortToman(low) : g.offers[0].shop_name;
+        const label = g.offers.length > 1 ? (low ? `${toFaDigits(g.offers.length)} مغازه، از ${shortToman(low)}` : `${toFaDigits(g.offers.length)} مغازه`) : low ? shortToman(low) : g.offers[0].shop_name;
         const pin = L.marker([g.lat, g.lon], {
           icon: L.divIcon({
             className: '',
