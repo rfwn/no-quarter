@@ -79,10 +79,11 @@ const FILTERS = z.object({
   installments: z.boolean().optional().describe('Offers installment payment (اقساط)'),
   fast_delivery: z.boolean().optional(),
   warranty: z.boolean().optional().describe('Has a warranty'),
+  visit: z.enum(['now', 'evening', 'tomorrow']).optional().describe('When they will go: opening status is checked for that time'),
 });
 
 function filtersFromArgs(a) {
-  return { radiusKm: a.radius_km, maxPrice: a.max_price, openNow: a.open_now, torobpay: a.torobpay, installments: a.installments, fastDelivery: a.fast_delivery, warranty: a.warranty };
+  return { radiusKm: a.radius_km, maxPrice: a.max_price, openNow: a.open_now, torobpay: a.torobpay, installments: a.installments, fastDelivery: a.fast_delivery, warranty: a.warranty, visit: a.visit };
 }
 
 export function shopBoardBlock({ product, result, filters, maybe = [], highlights = [], curatedIds }) {
@@ -98,6 +99,7 @@ export function shopBoardBlock({ product, result, filters, maybe = [], highlight
     price_median: result.price_median ?? null,
     bargain: result.bargain || null,
     time: result.time || null,
+    visit: result.visit || null,
     offers: result.offers,
     maybe_shops: maybe,
     highlights,
@@ -210,6 +212,7 @@ function sellersFor(product, args, state) {
       maybe_have_it_nearby: maybe.map((m) => ({ shop_id: m.shop_id, shop_name: m.shop_name, distance_km: m.distance_km })),
       bargain_range: result.bargain,
       time_now: result.time ? { open_now: result.time.open_now, closing_soon: result.time.closing_soon, advice: result.time.advice } : null,
+      visit_time: result.visit?.label || 'now',
       ...(alts.length ? { no_sellers_alternatives_shown: alts.map(({ image, ...a }) => a) } : {}),
     },
     update: {
@@ -523,9 +526,17 @@ const compare_offers = defineTool({
       warranty: best('max', (o) => o.warranty?.months ?? null),
     };
     const answers = Object.fromEntries(offers.map((o) => [o.offer_id, recentAnswer(o.shop_id, o.product_id)?.extracted || null]));
+    // Plan B for each: the closest other seller of the same product, decided before the trip.
+    const fallbacks = Object.fromEntries(offers.map((o) => [o.offer_id, catalog.fallbackFor(o)]).filter(([, f]) => f));
     return {
-      model: { compared: offers.map(offerForModel), best: wins, shop_answers: answers },
-      blocks: [{ type: 'compare', offers, best: wins, answers, bargain: catalog.findOffers(offers[0].product_id, { limit: 1 }).bargain }],
+      update: { offers: Object.fromEntries(Object.values(fallbacks).map((f) => [f.offer_id, f])), facts: { prices: Object.values(fallbacks).map((f) => f.price), phones: [] } },
+      model: {
+        compared: offers.map(offerForModel),
+        best: wins,
+        shop_answers: answers,
+        plan_b: Object.fromEntries(Object.entries(fallbacks).map(([id, f]) => [id, { offer_id: f.offer_id, shop_name: f.shop_name, metres_from_first: f.from_primary_m, price_diff_toman: f.price_diff }])),
+      },
+      blocks: [{ type: 'compare', offers, best: wins, answers, bargain: catalog.findOffers(offers[0].product_id, { limit: 1 }).bargain, fallbacks }],
     };
   },
 });
@@ -621,6 +632,7 @@ const plan_visit = defineTool({
       .map((order) => simulate(order, start, departAt))
       .sort((a, b) => a.cost - b.cost)[0];
 
+    const planB = []; // full offers of each stop's plan B, registered so a swap can be planned
     const stops = best.stops.map(({ o, km, mode, minutes, arrive, open, wait }) => {
       const answer = recentAnswer(o.shop_id, o.product_id)?.extracted;
       const stale = o.price_freshness === 'stale' || o.price_freshness === 'unknown';
@@ -645,6 +657,11 @@ const plan_visit = defineTool({
         hours_today: open.today,
         price: o.price,
         price_age_days: o.price_age_days,
+        fallback: (() => {
+          const f = catalog.fallbackFor(o, { exclude: offers.map((x) => x.shop_id) });
+          if (f) planB.push(f);
+          return f ? { offer_id: f.offer_id, shop_id: f.shop_id, shop_name: f.shop_name, passage: f.passage, floor_unit: f.floor_unit, lat: f.lat, lon: f.lon, price: f.price, from_primary_m: f.from_primary_m, price_diff: f.price_diff } : null;
+        })(),
         checks: [
           answer ? `خود مغازه گفته: ${answer.in_stock === false ? 'موجود نداره' : answer.in_stock ? 'موجوده' : 'موجودی نامعلوم'}${answer.price_toman ? `، ${answer.price_toman.toLocaleString('fa-IR')} تومان` : ''}` : null,
           !answer && stale ? `قیمت ثبت‌شده ${o.price_age_days != null ? `${o.price_age_days.toLocaleString('fa-IR')} روز پیشه` : 'تاریخ نداره'}؛ قبل از رفتن بپرس` : null,
@@ -672,7 +689,10 @@ const plan_visit = defineTool({
         total_minutes: block.total_minutes,
         leave_by: leaveBy,
         closed_on_arrival: stops.filter((s) => s.open_at_arrival === 'closed_now' || s.open_at_arrival === 'closed_today').map((s) => s.shop_name),
+        plan_b: stops.filter((s) => s.fallback).map((s) => ({ for: s.shop_name, shop_name: s.fallback.shop_name, metres_away: s.fallback.from_primary_m, price_diff_toman: s.fallback.price_diff })),
       },
+      // Plan B shops are switchable in one tap: the agent must know their offers.
+      update: { offers: Object.fromEntries(planB.map((f) => [f.offer_id, f])), facts: { prices: planB.map((f) => f.price), phones: [] } },
       blocks: [block],
     };
   },
@@ -784,3 +804,35 @@ export function humanBlock(call, state) {
 }
 
 export { emptyFacts };
+
+// ---------- when the model is unavailable ----------
+
+// Words that describe the request, not the product ("نزدیکم", "می‌خوام"…), dropped before a direct search.
+const FILLER = /(^|\s)(نزدیک(م|ترین)?|اطرافم|این\s*اطراف|می\s*خوام|میخوام|میخواهم|میخواستم|بخرم|یه|یک|کجا(ست)?|کجا\s*بخرم|لطفا|لطفاً|برام|برای\s*من|قیمت|ارزون(ترین)?|بهترین)(?=\s|$)/g;
+
+/**
+ * The same message answered without the model: a direct catalogue search, and — with a known location and
+ * one clear match — its shop board and map. Keeps the app useful when the AI provider is down or out of credit.
+ */
+export function directAnswer(text, ctx = {}) {
+  const query = normalizeText(text).replace(FILLER, ' ').replace(/\s+/g, ' ').trim();
+  const state = { ctx, products: {}, offers: {} };
+  const kinds = query.length >= 2 ? catalog.matchShopCategories(query, 4) : [];
+  const r = query.length >= 2 ? catalog.searchProducts(query, { limit: 8 }) : { results: [] };
+  const results = r.results.filter((p) => p.shops > 0).map((p) => withCard(p));
+  const intro = 'دستیار هوشمندم الان در دسترس نیست؛ این نتیجه‌ی جست‌وجوی مستقیم توی داده‌های تربه.';
+  // "…فروشی / مغازه‌ی …": a kind of shop, not a product.
+  if (kinds.length && origin(state) && /فروشی|مغازه|فروشگاه/.test(text)) {
+    const shops = catalog.shopsOfKindNear(kinds.filter((k) => k.score === kinds[0].score).map((k) => k.category), { origin: origin(state), limit: 12 });
+    if (shops.length) return { text: intro, blocks: [{ type: 'nearby_shops', id: `direct-kind-${Date.now()}`, category: kinds[0].category, origin: origin(state), shops }] };
+  }
+  // Only a search that matched every word is an answer; loose matches ("یه شعر بگو") are noise.
+  if (r.match !== 'all_words' && r.match !== 'category_popular') return { text: `${intro} برای «${text.slice(0, 40)}» چیزی پیدا نکردم؛ اسم کالا یا نوع مغازه رو بنویس.`, blocks: [] };
+  const pick = origin(state) ? confidentPick(query, results, text) || (results.length === 1 ? results[0] : null) : null;
+  if (pick) {
+    const s = sellersFor(pick, {}, state);
+    return { text: `${intro} مغازه‌هایی که «${pick.title}» رو دارن:`, blocks: s.blocks };
+  }
+  if (results.length) return { text: `${intro} یکی رو انتخاب کن تا مغازه‌هاش رو ببینی:`, blocks: [{ type: 'product_list', id: `direct-${Date.now()}`, title: null, products: results }] };
+  return { text: `${intro} برای «${text.slice(0, 40)}» چیزی پیدا نکردم؛ اسم دقیق‌تر کالا رو بنویس.`, blocks: [] };
+}

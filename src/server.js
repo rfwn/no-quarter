@@ -75,7 +75,7 @@ const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const ADMIN_PAGE = fileURLToPath(new URL('./admin.html', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff' };
 const THREAD_RE = /^[\w-]{8,80}$/;
-const FILTER_KEYS = { radius_km: 'radiusKm', max_price: 'maxPrice', open_now: 'openNow', torobpay: 'torobpay', installments: 'installments', fast_delivery: 'fastDelivery', warranty: 'warranty' };
+const FILTER_KEYS = { radius_km: 'radiusKm', max_price: 'maxPrice', open_now: 'openNow', torobpay: 'torobpay', installments: 'installments', fast_delivery: 'fastDelivery', warranty: 'warranty', visit: 'visit' };
 
 if (!config.model.apiKey) {
   console.error('Missing LLM_API_KEY. Copy .env.example to .env and set it.');

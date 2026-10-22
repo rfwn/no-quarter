@@ -17,7 +17,7 @@ import { gate, MESSAGES } from '../governance/policy.js';
 import { coarsenCtx, hashId, phoneKey } from '../governance/privacy.js';
 import { audit } from '../governance/audit.js';
 import { shopPage, getProduct, findOffers, categoryShopsNear } from '../data/catalog.js';
-import { shopBoardBlock } from './tools.js';
+import { directAnswer, shopBoardBlock } from './tools.js';
 import { photoText, readPhoto } from './model.js';
 
 // "Where am I?" is answered by the harness from state, not the model: the model kept treating it as
@@ -112,6 +112,41 @@ export async function runTurn({ threadId, userId, channel = 'web', message, resu
     console.error('[runTurn]', err);
     trace.flag('error');
     await audit('turn_failed', { trace: trace.id, detail: err.message });
+    // The model is unavailable (out of credit, provider down, timeout): answer this message with a direct
+    // search instead of an error, so shops and the map still show. Questions resumed mid-turn just fail.
+    if (text && !resume) {
+      try {
+        const snap = await graph.getState(threadConfig(threadId));
+        const direct = directAnswer(text, { ...(snap.values?.ctx || {}), ...coarsenCtx(ctx) });
+        if (direct.blocks.length) {
+          emit({ type: 'text_reset' });
+          for (const block of direct.blocks) emit({ type: 'ui', block });
+          // The failed turn may already have saved the user's message: add only what's missing.
+          const saved = (snap.values?.transcript || []).at(-1);
+          const hasUser = saved?.role === 'user' && saved.text === text;
+          const lastMsg = (snap.values?.messages || []).at(-1);
+          const hasHuman = lastMsg?._getType?.() === 'human' && lastMsg.content === text;
+          await graph
+            .updateState(
+              threadConfig(threadId),
+              {
+                messages: [...(hasHuman ? [] : [new HumanMessage(text)]), new AIMessage(direct.text)],
+                turn: newTurn(['direct']),
+                ui: null,
+                transcript: [...(hasUser ? [] : [{ role: 'user', text }]), { role: 'assistant', text: direct.text, blocks: direct.blocks, flags: ['direct'] }],
+              },
+              'verify',
+            )
+            .catch(() => {});
+          await finishTrace(trace, 'direct');
+          const done = { type: 'done', text: direct.text, blocks: direct.blocks, flags: ['direct'] };
+          emit(done);
+          return done;
+        }
+      } catch (e) {
+        console.error('[runTurn] direct answer failed', e);
+      }
+    }
     await finishTrace(trace, 'error');
     const done = { type: 'done', text: MESSAGES.failure, blocks: [], flags: ['error'] };
     emit(done);

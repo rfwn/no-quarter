@@ -366,6 +366,24 @@ export function findShopsByName(text, limit = 3) {
 }
 
 /** A shop's page: profile, where each fact comes from, and the first page of what it lists. */
+/**
+ * Plan B for a chosen offer: another shop listing the same product, as close to the first as possible
+ * (500 m preferred, 1.5 km at most), not closed at the visit time, with the price difference. So "they
+ * didn't have it" is a 1-tap switch, decided before the trip — not a new search in the passage.
+ */
+export function fallbackFor(offer, { visit = 'now', exclude = [] } = {}) {
+  if (!offer || offer.lat == null) return null;
+  const skip = new Set([offer.shop_id, ...exclude]);
+  const others = findOffers(offer.product_id, { origin: { lat: offer.lat, lon: offer.lon }, visit, limit: 300 })
+    .offers.filter((o) => !skip.has(o.shop_id) && o.price != null && o.distance_km != null && o.distance_km <= 1.5)
+    .filter((o) => !['closed_now', 'closed_today'].includes(o.open?.status));
+  if (!others.length) return null;
+  const near = others.filter((o) => o.distance_km <= 0.5);
+  // Close by first; among close ones, the cheapest.
+  const pick = (near.length ? near : others).sort((a, b) => (near.length ? a.price - b.price : a.distance_km - b.distance_km))[0];
+  return { ...pick, from_primary_m: Math.round(pick.distance_km * 1000), price_diff: offer.price != null ? pick.price - offer.price : null };
+}
+
 export function shopPage(shopId, { origin = null, query = '', category = null, offset = 0 } = {}) {
   const profile = shopProfile(shopId);
   if (!profile) return null;
@@ -382,8 +400,24 @@ export function shopPage(shopId, { origin = null, query = '', category = null, o
   };
 }
 
-export function findOffers(productId, { origin, radiusKm, maxPrice, openNow, torobpay, installments, fastDelivery, warranty, sort = 'auto', limit = 20 } = {}) {
-  const at = tehranNow();
+// ---------- when they'll go ----------
+
+const VISIT_LABEL = { now: 'الان', evening: 'امروز عصر (ساعت ۱۸)', tomorrow: 'فردا صبح (ساعت ۱۰:۳۰)' };
+
+/** The moment a visit means, in Tehran time (UTC+3:30, no DST since 2022). Past "evening" → now. */
+export function visitDate(visit = 'now', base = new Date()) {
+  if (visit !== 'evening' && visit !== 'tomorrow') return base;
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(base).map((x) => [x.type, Number(x.value)]));
+  const [h, m, add] = visit === 'evening' ? [18, 0, 0] : [10, 30, 1];
+  const at = new Date(Date.UTC(p.year, p.month - 1, p.day + add, h - 3, m - 30));
+  return at < base ? base : at;
+}
+
+export const visitLabel = (visit) => VISIT_LABEL[visit] || VISIT_LABEL.now;
+
+export function findOffers(productId, { origin, radiusKm, maxPrice, openNow, torobpay, installments, fastDelivery, warranty, visit = 'now', sort = 'auto', limit = 20 } = {}) {
+  // Opening status (and "open" filter / time advice) at the moment they'll actually go.
+  const at = tehranNow(visitDate(visit));
   const category = productStmt.get(productId)?.category || null;
   const all = offersStmt.all(productId).map((o) => toOffer(o, origin, at, category)).filter(Boolean);
   const passes = (o) =>
@@ -406,6 +440,7 @@ export function findOffers(productId, { origin, radiusKm, maxPrice, openNow, tor
     // Median over every listed price (not just the filtered page): the reference for "below market".
     price_median: prices.length ? prices[Math.floor(prices.length / 2)] : null,
     bargain: bargainRange(prices),
+    visit: visit === 'now' ? null : { key: visit, label: visitLabel(visit), at: visitDate(visit).toISOString() },
     time: timeAdvice(matched.slice(0, Math.max(limit, 15)), { day: at.day }),
     offers: matched.slice(0, limit),
   };

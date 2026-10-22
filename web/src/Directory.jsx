@@ -19,7 +19,14 @@ const TOGGLES = [
   ['fast_delivery', 'ارسال فوری'],
 ];
 
-const toUiFilters = (f = {}) => ({ radius_km: f.radiusKm, max_price: f.maxPrice, open_now: f.openNow, torobpay: f.torobpay, installments: f.installments, fast_delivery: f.fastDelivery, warranty: f.warranty });
+const toUiFilters = (f = {}) => ({ radius_km: f.radiusKm, max_price: f.maxPrice, open_now: f.openNow, torobpay: f.torobpay, installments: f.installments, fast_delivery: f.fastDelivery, warranty: f.warranty, visit: f.visit });
+
+// When they'll go: opening hours, the open filter and time advice are checked for that moment.
+const VISITS = [
+  ['now', 'الان'],
+  ['evening', 'امروز عصر'],
+  ['tomorrow', 'فردا صبح'],
+];
 
 // ---------- shop list ----------
 
@@ -38,7 +45,7 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
   const { offers, product } = block;
   const cheapest = Math.min(...offers.map((o) => o.price ?? Infinity));
   const nearestId = offers.reduce((a, o) => (o.distance_km != null && (a == null || o.distance_km < a.distance_km) ? o : a), null)?.offer_id;
-  const activeCount = Object.values(filters).filter(Boolean).length;
+  const activeCount = Object.entries(filters).filter(([k, v]) => v && k !== 'visit').length;
   // A shop can list the same product more than once (colour, condition); those rows need a differentiator.
   const listingLabels = useMemo(() => distinctListingLabels(offers), [offers]);
 
@@ -87,6 +94,19 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
         </header>
       )}
 
+      {product && (
+        <div className="visit-row" role="radiogroup" aria-label="کی می‌ری؟">
+          <span className="visit-label">کی می‌ری؟</span>
+          <div className="visit-switch">
+            {VISITS.map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={(filters.visit || 'now') === key} className="visit-opt" disabled={loading} onClick={() => apply({ ...filters, visit: key === 'now' ? undefined : key })}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {product && block.visit && <p className="visit-note">ساعت‌ها برای «{block.visit.label}» حساب شده‌ان.</p>}
       {product && (
         <div className="filter-row" role="group" aria-label="فیلترها">
           <button type="button" className="chip" aria-pressed={!!filters.radius_km} onClick={() => apply({ ...filters, radius_km: RADII[(RADII.indexOf(filters.radius_km) + 1) % (RADII.length + 1)] })}>

@@ -261,7 +261,8 @@ function contractViolations(text, turn, state) {
   if (VERSUS.test(lastUser) && VERSUS_INTENT.test(lastUser) && foundModels >= 2 && !state.ui.some((b) => b.type === 'product_compare' || b.type === 'compare')) {
     v.push('They asked which of two models to pick. Search each model if needed, then call compare_products with both product_ids (and focus for what matters to them).');
   }
-  if (OUT_OF_STOCK.test(lastUser) && !state.ui.some((b) => b.type === 'shop_board' || b.reason === 'alternatives')) {
+  // A plan already rebuilt around another shop (plan B swap) is the answer too.
+  if (OUT_OF_STOCK.test(lastUser) && !state.ui.some((b) => b.type === 'shop_board' || b.type === 'visit_plan' || b.reason === 'alternatives')) {
     v.push('The shop is out of stock. Find somewhere else: find_alternatives for this product, and/or find_sellers to show other shops that list it.');
   }
   if (state.ctx?.lat != null && ASKS_LOCATION.test(text)) {

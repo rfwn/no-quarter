@@ -11,6 +11,7 @@ import LocationPicker from './Location.jsx';
 import ShopPage from './ShopPage.jsx';
 import { ProductCompare } from './TypeCard.jsx';
 import ShoppingList from './ShoppingList.jsx';
+import PlanB from './PlanB.jsx';
 import { BargainRange, SellerClaims } from './Buying.jsx';
 import { openShop } from './shopSheet.js';
 import { Src } from './Source.jsx';
@@ -257,6 +258,7 @@ function Compare({ block, ctx, onAsk, busy }) {
                 ))}
               </dl>
               <SellerClaims claims={o.seller_claims} />
+              <PlanB fallback={block.fallbacks?.[o.offer_id]} forName={o.shop_name} onAsk={onAsk} busy={busy} ask={`اگه «${o.shop_name}» نداشت، به‌جاش «${block.fallbacks?.[o.offer_id]?.shop_name}» رو بذار و برنامه‌ی رفتن رو بچین`} />
               <div className="cmp-actions">
                 {neshanHref(o) && (
                   <a className="btn btn-ghost btn-sm" href={neshanHref(o)} target="_blank" rel="noopener noreferrer" aria-label={`مسیر تا ${o.shop_name} در نشان`}>
@@ -374,6 +376,7 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
                   ))}
                 </ul>
               )}
+              <PlanB fallback={s.fallback} forName={s.shop_name} onAsk={onAsk} busy={busy} ask={`«${s.shop_name}» نداشت؛ به‌جاش «${s.fallback?.shop_name}» رو توی برنامه‌ی رفتن بذار`} />
               <div className="plan-actions">
                 {neshanHref(s) && (
                   <a className="btn btn-ghost btn-sm" href={neshanHref(s)} target="_blank" rel="noopener noreferrer" aria-label={`مسیر تا ${s.shop_name} در نشان`}>
