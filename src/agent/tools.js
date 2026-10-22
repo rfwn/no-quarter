@@ -9,6 +9,7 @@ import * as catalog from '../data/catalog.js';
 import { productCard, compareCards, familyOf, familyLabels } from '../data/families.js';
 import { bargainTips, GLOSSARY } from '../data/buying.js';
 import { planShoppingList, resolveItem } from '../data/shoppingList.js';
+import { holidayNote, holidayOn } from '../data/holidays.js';
 import { normalizeText, queryTokens } from '../data/normalize.js';
 import { instagramEvidence, followupsForThread, recentAnswer, outreachMessage, createFollowup, shopChannels } from '../followups.js';
 import { sanitizeSellerText } from '../governance/untrusted.js';
@@ -100,6 +101,7 @@ export function shopBoardBlock({ product, result, filters, maybe = [], highlight
     bargain: result.bargain || null,
     time: result.time || null,
     visit: result.visit || null,
+    holiday: result.holiday || null,
     offers: result.offers,
     maybe_shops: maybe,
     highlights,
@@ -213,6 +215,7 @@ function sellersFor(product, args, state) {
       bargain_range: result.bargain,
       time_now: result.time ? { open_now: result.time.open_now, closing_soon: result.time.closing_soon, advice: result.time.advice } : null,
       visit_time: result.visit?.label || 'now',
+      holiday: result.holiday || null,
       ...(alts.length ? { no_sellers_alternatives_shown: alts.map(({ image, ...a }) => a) } : {}),
     },
     update: {
@@ -676,8 +679,10 @@ const plan_visit = defineTool({
     // Latest departure that still finds every open-on-arrival shop open (minus the time spent inside).
     const slack = Math.min(...stops.filter((s) => s.open_at_arrival === 'open' && s.minutes_before_close != null).map((s) => s.minutes_before_close - IN_SHOP_MIN));
     const leaveBy = Number.isFinite(slack) && slack < 240 ? new Date(departAt + Math.max(0, slack) * 60_000).toISOString() : null;
+    const holiday = holidayNote(holidayOn(new Date(departAt)), 'امروز');
     const block = {
       type: 'visit_plan',
+      holiday,
       stops,
       leave_at: new Date(departAt).toISOString(),
       leave_by: leaveBy,
@@ -689,6 +694,7 @@ const plan_visit = defineTool({
         total_minutes: block.total_minutes,
         leave_by: leaveBy,
         closed_on_arrival: stops.filter((s) => s.open_at_arrival === 'closed_now' || s.open_at_arrival === 'closed_today').map((s) => s.shop_name),
+        holiday,
         plan_b: stops.filter((s) => s.fallback).map((s) => ({ for: s.shop_name, shop_name: s.fallback.shop_name, metres_away: s.fallback.from_primary_m, price_diff_toman: s.fallback.price_diff })),
       },
       // Plan B shops are switchable in one tap: the agent must know their offers.
@@ -744,7 +750,8 @@ const ask_shop = defineTool({
     }
     shop_id = shop.shop_id;
     const f = createFollowup({ threadId, shopId: shop_id, productId: product_id, productTitle: product.title, message: outreachMessage(product.title) });
-    const channels = shopChannels(shop);
+    // WhatsApp opens with the message already typed; Instagram can't be pre-filled.
+    const channels = shopChannels(shop).map((c) => (c.kind === 'whatsapp' ? { ...c, url: `${c.url}?text=${encodeURIComponent(f.message)}` } : c));
     return {
       model: { followup_id: f.id, status: f.status, channels: channels.map((c) => c.kind), answer: f.extracted || null, note: 'The user sends the message and pastes the reply here. Never say a message was sent or that you asked the shop.' },
       update: f.extracted?.price_toman ? { facts: { prices: [f.extracted.price_toman], phones: [] } } : {},

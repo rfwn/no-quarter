@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { fetchShop, refilterOffers } from './api.js';
-import { cleanTitle, faDate, formatKm, paymentText, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
+import { SAMPLE_PHONE_NOTE, cleanTitle, faDate, formatKm, paymentText, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, CheckIcon, ChevronIcon, InfoIcon, MapIcon, PhoneIcon, RouteIcon, TagIcon } from './Icons.jsx';
 import ShopMap, { MapPeek, focusRow, offerPoints } from './ShopMap.jsx';
 import { openShop } from './shopSheet.js';
@@ -107,6 +107,11 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
         </div>
       )}
       {product && block.visit && <p className="visit-note">ساعت‌ها برای «{block.visit.label}» حساب شده‌ان.</p>}
+      {block.holiday && (
+        <p className="holiday-note" role="alert">
+          {block.holiday}
+        </p>
+      )}
       {product && (
         <div className="filter-row" role="group" aria-label="فیلترها">
           <button type="button" className="chip" aria-pressed={!!filters.radius_km} onClick={() => apply({ ...filters, radius_km: RADII[(RADII.indexOf(filters.radius_km) + 1) % (RADII.length + 1)] })}>
@@ -434,6 +439,7 @@ function OfferRow({ focused, offer: o, threadId, listingLabel, belowMedian, pick
             <PhoneIcon size={18} />
             {state === 'loading' ? 'در حال گرفتن شماره…' : shop?.phone ? toFaDigits(shop.phone) : 'تماس'}
           </button>
+          <p className="sample-phone">{SAMPLE_PHONE_NOTE}</p>
           {neshanHref(o) && (
             <a className="btn btn-ghost" href={neshanHref(o)} target="_blank" rel="noreferrer">
               <RouteIcon size={18} />

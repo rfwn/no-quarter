@@ -88,3 +88,13 @@ test('model comparison marks a single winner per row and never a tie', () => {
   assert.equal(rows.find((r) => r.label === 'باتری').winner, 0);
   assert.equal(rows.find((r) => r.label === 'وزن').winner, null);
 });
+
+test('holidays: looked up by the Tehran calendar day; lunar ones say «احتمالاً»', async () => {
+  const { holidayOn, holidayNote, upcomingHolidays } = await import('../src/data/holidays.js');
+  // 00:30 Tehran on 13 Nov 2026 is still 12 Nov in UTC
+  assert.equal(holidayOn(new Date('2026-11-12T21:00:00Z'))?.name, 'شهادت حضرت فاطمه');
+  assert.equal(holidayOn(new Date('2026-10-22T08:00:00Z')), null);
+  assert.match(holidayNote(holidayOn(new Date('2026-11-13T08:00:00Z')), 'فردا'), /احتمالاً/);
+  assert.doesNotMatch(holidayNote(holidayOn(new Date('2027-03-21T08:00:00Z')), 'امروز'), /احتمالاً/, 'Nowruz is a fixed date');
+  assert.equal(upcomingHolidays(2, new Date('2027-03-20T08:00:00Z')).length, 2);
+});

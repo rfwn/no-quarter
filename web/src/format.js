@@ -74,3 +74,6 @@ export function paymentText(o) {
   if (methods?.length) return methods.map((p) => `${p.provider} (${p.in_person ? 'حضوری' : 'نوع پذیرش نامعلوم'})`).join('، ');
   return [o?.torobpay_in_person && 'ترب‌پی (حضوری)', ...(o?.installments || [])].filter(Boolean).join('، ');
 }
+
+/** The contest dataset's phone numbers are synthetic (organisers' note); say so next to call buttons. */
+export const SAMPLE_PHONE_NOTE = 'شماره‌ها در داده‌ی مسابقه نمونه‌ان؛ در نسخه‌ی واقعی شماره‌ی خود مغازه می‌آد.';

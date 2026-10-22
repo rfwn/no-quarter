@@ -3,6 +3,7 @@
 import Database from 'better-sqlite3';
 import { existsSync } from 'node:fs';
 import { bargainRange, phoneSignals, timeAdvice, warrantyKind } from './buying.js';
+import { holidayNote, holidayOn } from './holidays.js';
 import { normalizeText, queryTokens } from './normalize.js';
 
 const DB_PATH = process.env.DB_PATH || 'data/torob.db';
@@ -441,6 +442,8 @@ export function findOffers(productId, { origin, radiusKm, maxPrice, openNow, tor
     price_median: prices.length ? prices[Math.floor(prices.length / 2)] : null,
     bargain: bargainRange(prices),
     visit: visit === 'now' ? null : { key: visit, label: visitLabel(visit), at: visitDate(visit).toISOString() },
+    // An official holiday on the visit day: most shops close whatever their weekly hours say.
+    holiday: holidayNote(holidayOn(visitDate(visit)), visit === 'tomorrow' ? 'فردا' : 'امروز'),
     time: timeAdvice(matched.slice(0, Math.max(limit, 15)), { day: at.day }),
     offers: matched.slice(0, limit),
   };

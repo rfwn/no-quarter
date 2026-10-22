@@ -2,7 +2,7 @@
 // Rendered inline when the agent calls show_shop, and in a sheet when any shop name is tapped.
 import { useEffect, useRef, useState } from 'react';
 import { fetchShop } from './api.js';
-import { cleanTitle, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
+import { SAMPLE_PHONE_NOTE, cleanTitle, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, LinkIcon, PhoneIcon, RouteIcon, SearchIcon } from './Icons.jsx';
 import { Src } from './Source.jsx';
 import ShopMap from './ShopMap.jsx';
@@ -106,6 +106,8 @@ export default function ShopPage({ shop: initial, shopId, threadId, ctx, onAsk, 
       {shop.lat != null && (
         <ShopMap title={shop.name} points={[{ id: shop.shop_id, lat: shop.lat, lon: shop.lon, label: shop.name, title: shop.name, best: true }]} origin={ctx?.lat != null ? ctx : null} />
       )}
+
+      {shop.phone && <p className="sample-phone">{SAMPLE_PHONE_NOTE}</p>}
 
       <dl className="shop-facts">
         <div>

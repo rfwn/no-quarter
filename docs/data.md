@@ -31,6 +31,8 @@ The app uses the Torob hackathon dataset (`torob-dataset.zip`: 6,476 shops · 22
 | At most 300 products per shop | Shop pages show what is listed, not "everything they sell" |
 | Not in the export: shop photos, licences, Torob history, WhatsApp/Bale contacts, کالابرگ support | Not shown and not invented. WhatsApp links appear only for mobile numbers in the data. |
 | Payment channel is often `unknown` | Labelled «نوع پذیرش نامعلوم», with advice to ask |
+| Weekly hours don't know official holidays | `src/data/holidays.js` lists the coming months' holidays: shop lists and visit plans warn «تعطیل رسمیه». Lunar dates are computed (±1 day) and shown as «احتمالاً» |
+| No signal in passage basements | The latest visit plan or shopping list is saved on the phone; with no connection the app still opens (service worker) and shows it |
 
 ## Instagram and contacting shops
 

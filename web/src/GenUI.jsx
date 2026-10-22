@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ProductList, ShopList } from './Directory.jsx';
 import { fetchFollowups, markShopAsked, reportShopAnswer } from './api.js';
-import { clockFa, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
+import { SAMPLE_PHONE_NOTE, clockFa, formatKm, neshanHref, openState, paymentText, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { BackIcon, ChatIcon, CheckIcon, LinkIcon, LocateIcon, MapIcon, PhoneIcon, RouteIcon } from './Icons.jsx';
 import ShopMap, { MapPeek, focusRow, offerPoints, ownControl } from './ShopMap.jsx';
 import Sheet from './Sheet.jsx';
@@ -12,6 +12,7 @@ import ShopPage from './ShopPage.jsx';
 import { ProductCompare } from './TypeCard.jsx';
 import ShoppingList from './ShoppingList.jsx';
 import PlanB from './PlanB.jsx';
+import { ShareButton, compareText, planText } from './Share.jsx';
 import { BargainRange, SellerClaims } from './Buying.jsx';
 import { openShop } from './shopSheet.js';
 import { Src } from './Source.jsx';
@@ -285,6 +286,9 @@ function Compare({ block, ctx, onAsk, busy }) {
           <BargainRange bargain={block.bargain} />
         </div>
       )}
+      <div className="cmp-share">
+        <ShareButton title="مقایسه‌ی مغازه‌ها" text={() => compareText(ranked, pick)} />
+      </div>
       <p className="data-note">پیشنهاد بر اساس قیمت ثبت‌شده، فاصله، تازگی قیمت و باز بودنه؛ موجودی رو مغازه باید تأیید کنه.</p>
     </section>
   );
@@ -322,6 +326,11 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
           </p>
         )}
       </header>
+      {block.holiday && (
+        <p className="holiday-note" role="alert">
+          {block.holiday}
+        </p>
+      )}
       {closed.length > 0 && (
         <p className="inline-error" role="alert">
           {closed.map((s) => `«${s.shop_name}»`).join('، ')} موقع رسیدن بسته‌ست؛ یه روز دیگه یا یه مغازه‌ی دیگه رو در نظر بگیر.
@@ -401,7 +410,9 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
             <RouteIcon size={18} /> برو سمت مغازه‌ی اول
           </a>
         )}
+        <ShareButton title="برنامه‌ی خرید" text={() => planText(block)} />
       </div>
+      <p className="saved-note">این برنامه روی گوشیت ذخیره شد؛ بدون اینترنت هم باز می‌شه.</p>
     </section>
   );
 }
@@ -571,6 +582,7 @@ function Followup({ block, threadId, onAsk, busy }) {
                 )}
               </div>
               {!channels.some((c) => c.kind === 'instagram') && <p className="muted small">این مغازه اینستاگرام ثبت‌شده نداره؛ تماس یا سایت سریع‌تره.</p>}
+              {channels.some((c) => c.kind === 'phone' || c.kind === 'whatsapp') && <p className="sample-phone">{SAMPLE_PHONE_NOTE}</p>}
               <button type="button" className="link-btn" onClick={sent}>
                 فرستادم ✓
               </button>

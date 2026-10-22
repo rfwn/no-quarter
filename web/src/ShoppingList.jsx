@@ -2,6 +2,7 @@
 // plainly how many items it covers — a cheaper total that misses an item isn't really cheaper.
 import { useRef, useState } from 'react';
 import ShopMap, { focusRow, ownControl } from './ShopMap.jsx';
+import { ShareButton, listText } from './Share.jsx';
 import { cleanTitle, formatKm, shortToman, toFaDigits } from './format.js';
 import { openShop } from './shopSheet.js';
 import { Src } from './Source.jsx';
@@ -94,6 +95,7 @@ export default function ShoppingList({ block, ctx, onAsk, busy }) {
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onAsk(`برنامه‌ی رفتن برای گزینه‌ی «${op.title}» رو بچین`)}>
             برنامه‌ی رفتن با همین گزینه
           </button>
+          <ShareButton title="لیست خرید" text={() => listText(block, op)} />
         </div>
       )}
       <p className="data-note">قیمت‌ها ثبت‌شده‌ن و موجودی تأیید نشده؛ برای چند قلم، قبل از رفتن بپرسی بهتره.</p>

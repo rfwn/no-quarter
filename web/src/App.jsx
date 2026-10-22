@@ -12,6 +12,7 @@ import Drawer from './Drawer.jsx';
 import LocationPicker from './Location.jsx';
 import ShopPage from './ShopPage.jsx';
 import Nudges from './Nudges.jsx';
+import { OfflineTrip, saveTrip, useOnline } from './Offline.jsx';
 import { onOpenShop } from './shopSheet.js';
 import { LevelChip, MissionBar, Profile, RewardNote, ThemeSwitch, rewardFor } from './GameUI.jsx';
 import { clearMission, record, startBasket, subscribe } from './game.js';
@@ -110,6 +111,7 @@ export default function App() {
   const [photo, setPhoto] = useState(null); // data URL waiting to be sent
   const [photoError, setPhotoError] = useState('');
   const [shopOpen, setShopOpen] = useState(null); // {shopId, name}
+  const online = useOnline();
   // Tab title follows the chat, as TorobChat's does: «آیفون ۱۳ ۱۲۸ | ترب‌چین».
   const chatTitle = turns[0]?.query;
   useEffect(() => {
@@ -140,8 +142,11 @@ export default function App() {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    fetchThread(threadId).then(({ transcript, pending }) => setTurns(turnsFromTranscript(transcript, pending)));
-    fetchAreas().then(setAreas);
+    // Offline (or a server blip): keep what's on screen; the saved trip covers the no-signal case.
+    fetchThread(threadId)
+      .then(({ transcript, pending }) => setTurns(turnsFromTranscript(transcript, pending)))
+      .catch(() => {});
+    fetchAreas().then(setAreas).catch(() => {});
   }, [threadId]);
 
   useEffect(() => {
@@ -182,6 +187,7 @@ export default function App() {
           else if (e.type === 'text_reset') patchLast(() => ({ stream: '' }));
           else if (e.type === 'ui') {
             recordBlock(e.block);
+            saveTrip(e.block); // readable later with no signal
             patchLast((t) => {
               const items = t.items.filter((it) => !(it.kind === 'block' && e.block.replaces?.includes(it.block.id)));
               return { items: [...items, { kind: 'block', block: e.block }], pending: null };
@@ -199,7 +205,7 @@ export default function App() {
           }));
         }
       } catch (err) {
-        patchLast(() => ({ status: 'error', stream: '', error: err.message || 'خطایی رخ داد.' }));
+        patchLast(() => ({ status: 'error', stream: '', error: navigator.onLine ? err.message || 'خطایی رخ داد.' : 'اینترنت قطعه؛ وصل که شد دوباره بفرست.' }));
       }
     },
     [threadId, origin, name],
@@ -313,6 +319,11 @@ export default function App() {
             <span>{origin.place || 'موقعیت'}</span>
           </button>
         </header>
+        {!online && (
+          <div className="offline-wrap">
+            <OfflineTrip />
+          </div>
+        )}
         {coverage && coverage.level !== 'good' && (
           <div className="coverage-note" role="note">
             <p>

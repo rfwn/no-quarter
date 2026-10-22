@@ -2639,3 +2639,100 @@
 .planb .btn {
   flex-shrink: 0;
 }
+
+/* ---------- Offline trip, share, holidays, sample phones ---------- */
+
+.offline-wrap {
+  max-width: 768px;
+  margin: 8px auto 0;
+  padding: 0 16px;
+}
+
+.offline {
+  padding: 14px 16px;
+  border-color: var(--line-strong);
+}
+
+.offline-head {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.offline-stops {
+  margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.offline-stops li {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.offline-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.offline-where,
+.offline-meta,
+.offline-checks,
+.offline-planb {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.offline-where {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.offline-meta,
+.offline-checks {
+  color: var(--ink-2);
+}
+
+.offline-planb {
+  color: var(--muted);
+}
+
+.offline-saved {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.saved-note {
+  margin: 0;
+  padding: 0 16px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cmp-share {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 12px;
+}
+
+.holiday-note {
+  margin: 8px 16px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.sample-phone {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
