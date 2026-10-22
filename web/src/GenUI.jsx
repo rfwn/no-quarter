@@ -1,11 +1,11 @@
 // Generative UI: the agent chooses components by type; these registries are the client-side allowlist.
 // Unknown types render nothing — the agent can't inject arbitrary UI.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ProductList, ShopList } from './Directory.jsx';
 import { markShopAsked, reportShopAnswer } from './api.js';
 import { clockFa, formatKm, neshanHref, openState, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { BackIcon, ChatIcon, CheckIcon, LinkIcon, LocateIcon, MapIcon, PhoneIcon, RouteIcon } from './Icons.jsx';
-import MapView from './MapView.jsx';
+import ShopMap, { MapPeek, focusRow, offerPoints, ownControl } from './ShopMap.jsx';
 import Sheet from './Sheet.jsx';
 import LocationPicker from './Location.jsx';
 import ShopPage from './ShopPage.jsx';
@@ -168,8 +168,11 @@ function tradeoff(pick, offers) {
 const warrantyText = (w) => (w ? `${w.provider}${w.months ? ` ${toFaDigits(w.months)} ماه` : ''}` : null);
 const answerText = (a) => `${a.in_stock === true ? 'موجوده' : a.in_stock === false ? 'ناموجوده' : 'نامعلوم'}${a.price_toman ? `، ${shortToman(a.price_toman)}` : ''}`;
 
-function Compare({ block, onAsk, busy }) {
+function Compare({ block, ctx, onAsk, busy }) {
   const { offers, best = {}, answers = {} } = block;
+  const [focusId, setFocusId] = useState(null);
+  const listRef = useRef(null);
+  const pickRow = (id) => (setFocusId(id), focusRow(listRef.current, id));
   const ranked = rankOffers(offers);
   const pick = ranked[0];
   const cheapest = Math.min(...offers.map((o) => o.price ?? Infinity));
@@ -186,11 +189,20 @@ function Compare({ block, onAsk, busy }) {
   return (
     <section className="card cmp" aria-label="مقایسه مغازه‌ها">
       <header className="cmp-head">
-        <p className="cmp-kicker">پیشنهاد ترب‌چین از بین {toFaDigits(offers.length)} مغازه</p>
-        <h3 className="cmp-pick">{pick.shop_name}</h3>
+        <h3 className="cmp-pick">پیشنهاد: {pick.shop_name}</h3>
+        <p className="cmp-of">از بین {toFaDigits(offers.length)} مغازه</p>
         {note && <p className="cmp-tradeoff">{note}</p>}
       </header>
-      <ol className="cmp-list">
+      <div className="card-map">
+        <ShopMap
+          title="مقایسه"
+          points={offerPoints(offers, (o) => (o.offer_id === pick.offer_id ? `پیشنهاد، ${o.price != null ? shortToman(o.price) : ''}` : o.price != null ? shortToman(o.price) : o.shop_name))}
+          origin={ctx?.lat != null ? ctx : null}
+          selectedId={focusId}
+          onSelect={pickRow}
+        />
+      </div>
+      <ol className="cmp-list" ref={listRef}>
         {ranked.map((o, i) => {
           const more = o.price != null && Number.isFinite(cheapest) && o.price > cheapest ? o.price - cheapest : 0;
           const open = openState(o.open);
@@ -207,7 +219,7 @@ function Compare({ block, onAsk, busy }) {
             ['جواب مغازه', a ? answerText(a) : null, '', 'you'],
           ].filter(([, v]) => v);
           return (
-            <li key={o.offer_id} className={`cmp-shop${i === 0 ? ' is-pick' : ''}`}>
+            <li key={o.offer_id} className={`cmp-shop${i === 0 ? ' is-pick' : ''}${focusId === o.offer_id ? ' is-focus' : ''}`} data-pin={o.offer_id} onClick={(e) => !ownControl(e) && setFocusId(o.offer_id)}>
               <div className="cmp-top">
                 <div>
                   <p className="cmp-name">
@@ -287,7 +299,8 @@ function arrivalNote(s) {
 }
 
 function VisitPlan({ block, ctx, onAsk, busy }) {
-  const [mapOpen, setMapOpen] = useState(false);
+  const [focusId, setFocusId] = useState(null);
+  const listRef = useRef(null);
   const closed = block.stops.filter((s) => s.open_at_arrival === 'closed_now' || s.open_at_arrival === 'closed_today');
   const first = block.stops[0];
   return (
@@ -312,9 +325,33 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
           {closed.map((s) => `«${s.shop_name}»`).join('، ')} موقع رسیدن بسته‌ست؛ یه روز دیگه یا یه مغازه‌ی دیگه رو در نظر بگیر.
         </p>
       )}
-      <ol className="timeline">
+      <div className="card-map">
+        <ShopMap
+          title="مسیر خرید"
+          route
+          points={block.stops.map((s, i) => ({ id: s.offer_id, lat: s.lat, lon: s.lon, order: i + 1, label: s.shop_name, title: s.shop_name, closed: s.open_at_arrival !== 'open' && s.open_at_arrival !== 'unknown' }))}
+          origin={ctx?.lat != null ? ctx : null}
+          selectedId={focusId}
+          onSelect={(id) => (setFocusId(id), focusRow(listRef.current, id))}
+          peek={(() => {
+            const i = block.stops.findIndex((x) => x.offer_id === focusId);
+            const s = block.stops[i];
+            if (!s) return null;
+            return (
+              <MapPeek
+                title={`${toFaDigits(i + 1)}. ${s.shop_name}`}
+                sub={`رسیدن ${clockFa(s.arrive_at)}، ${arrivalNote(s)}`}
+                meta={s.passage ? `${s.passage}${s.floor_unit ? `، ${s.floor_unit}` : ''}` : null}
+                place={s}
+                onClose={() => setFocusId(null)}
+              />
+            );
+          })()}
+        />
+      </div>
+      <ol className="timeline" ref={listRef}>
         {block.stops.map((s, i) => (
-          <li key={s.offer_id} className={s.open_at_arrival === 'open' ? '' : 'is-closed'}>
+          <li key={s.offer_id} className={`${s.open_at_arrival === 'open' ? '' : 'is-closed'}${focusId === s.offer_id ? ' is-focus' : ''}`} data-pin={s.offer_id} onClick={(e) => !ownControl(e) && setFocusId(s.offer_id)}>
             <span className="step-dot">{toFaDigits(i + 1)}</span>
             <div className="step-body">
               <p className="muted small">
@@ -356,18 +393,12 @@ function VisitPlan({ block, ctx, onAsk, busy }) {
         ))}
       </ol>
       <div className="actions">
-        <button type="button" className="btn btn-ghost" onClick={() => setMapOpen(true)}>
-          <MapIcon size={18} /> مسیر روی نقشه
-        </button>
         {neshanHref(first) && (
           <a className="btn btn-primary" href={neshanHref(first)} target="_blank" rel="noopener noreferrer">
             <RouteIcon size={18} /> برو سمت مغازه‌ی اول
           </a>
         )}
       </div>
-      <Sheet open={mapOpen} title="مسیر خرید" onClose={() => setMapOpen(false)} tall>
-        {mapOpen && <MapView offers={block.stops.map((s) => ({ ...s, open: { status: s.open_at_arrival } }))} origin={ctx?.lat != null ? ctx : null} route={[...(ctx?.lat != null ? [ctx] : []), ...block.stops]} />}
-      </Sheet>
     </section>
   );
 }
@@ -617,7 +648,8 @@ function LocationQuestion({ block, onResume, busy, onLocation, areas }) {
 
 /** Shops of a kind near the user ("nearest phone shop") — no product, so no prices: distance, hours, directions. */
 function NearbyShops({ block, ctx, onAsk, busy }) {
-  const [mapOpen, setMapOpen] = useState(false);
+  const [focusId, setFocusId] = useState(null);
+  const listRef = useRef(null);
   const shops = block.shops || [];
   const origin = block.origin || (ctx?.lat != null ? ctx : null);
   return (
@@ -629,16 +661,37 @@ function NearbyShops({ block, ctx, onAsk, busy }) {
             {toFaDigits(shops.length)} مغازه{origin ? '، نزدیک‌ترین اول' : ''}
           </p>
         </div>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMapOpen(true)} disabled={!shops.length}>
-          <MapIcon size={18} />
-          نقشه
-        </button>
       </header>
-      <ul className="list">
+      <ShopMap
+        title={`${block.category} روی نقشه`}
+        points={shops.map((s) => ({ id: s.shop_id, lat: s.lat, lon: s.lon, label: s.shop_name, title: s.shop_name, closed: ['closed_now', 'closed_today', 'opens_later'].includes(s.open?.status) }))}
+        origin={origin}
+        selectedId={focusId}
+        onSelect={(id) => (setFocusId(id), focusRow(listRef.current, id))}
+        peek={(() => {
+          const s = shops.find((x) => x.shop_id === focusId);
+          if (!s) return null;
+          return (
+            <MapPeek
+              title={s.shop_name}
+              sub={s.address || s.area}
+              meta={`${openState(s.open).text}${s.distance_km != null ? `، ${formatKm(s.distance_km)}` : ''}`}
+              place={s}
+              onClose={() => setFocusId(null)}
+              action={
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => openShop(s.shop_id, s.shop_name)}>
+                  صفحه‌ی مغازه
+                </button>
+              }
+            />
+          );
+        })()}
+      />
+      <ul className="list" ref={listRef}>
         {shops.map((s, i) => {
           const open = openState(s.open);
           return (
-            <li key={s.shop_id} className="row">
+            <li key={s.shop_id} className={`row${focusId === s.shop_id ? ' is-focus' : ''}`} data-pin={s.shop_id} onClick={(e) => !ownControl(e) && setFocusId(s.shop_id)}>
               <div className="row-line">
                 <div className="row-main">
                   <span className="row-text">
@@ -675,9 +728,6 @@ function NearbyShops({ block, ctx, onAsk, busy }) {
           </button>
         </div>
       )}
-      <Sheet open={mapOpen} title={`${block.category} روی نقشه`} onClose={() => setMapOpen(false)} tall>
-        {mapOpen && <MapView offers={shops.map((s) => ({ ...s, offer_id: s.shop_id, price: null }))} origin={origin} />}
-      </Sheet>
     </section>
   );
 }

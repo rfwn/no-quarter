@@ -25,6 +25,8 @@ function stop(offers) {
     shop_name: o.shop_name,
     passage: o.passage,
     floor_unit: o.floor_unit,
+    lat: o.lat,
+    lon: o.lon,
     distance_km: o.distance_km,
     open: o.open?.status || 'unknown',
     items: offers.map((x) => ({ product_id: x.product_id, offer_id: x.offer_id, price: x.price, price_age_days: x.price_age_days })),

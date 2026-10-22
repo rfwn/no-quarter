@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { fetchShop, refilterOffers } from './api.js';
 import { cleanTitle, faDate, formatKm, neshanHref, openState, priceAge, rangeText, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, CheckIcon, ChevronIcon, InfoIcon, MapIcon, PhoneIcon, RouteIcon, TagIcon } from './Icons.jsx';
-import MapView from './MapView.jsx';
+import ShopMap, { MapPeek, focusRow, offerPoints } from './ShopMap.jsx';
 import { openShop } from './shopSheet.js';
 import { Src } from './Source.jsx';
 import { TypeFacts } from './TypeCard.jsx';
@@ -30,7 +30,8 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
   const [error, setError] = useState('');
   const [openId, setOpenId] = useState(null);
   const [picked, setPicked] = useState([]);
-  const [mapOpen, setMapOpen] = useState(false);
+  const [focusId, setFocusId] = useState(null); // the shop selected on the map ↔ in the list
+  const listRef = useRef(null);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const highlights = useMemo(() => new Map((block.highlights || []).map((h) => [h.offer_id, h.reason])), [block.highlights]);
 
@@ -83,10 +84,6 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
               {block.price_range && <span className="nowrap">، {rangeText(block.price_range.min, block.price_range.max)}</span>}
             </p>
           </div>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => (record('map'), setMapOpen(true))} disabled={!offers.length}>
-            <MapIcon size={18} />
-            نقشه
-          </button>
         </header>
       )}
 
@@ -125,6 +122,38 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
         </p>
       )}
 
+      {offers.length > 0 && (
+        <ShopMap
+          title={product ? cleanTitle(product.title) : 'مغازه‌ها'}
+          points={offerPoints(offers, (o) => (o.price != null ? shortToman(o.price) : o.shop_name))}
+          origin={ctx?.lat != null ? ctx : null}
+          selectedId={focusId}
+          onSelect={(id) => {
+            record('map');
+            setFocusId(id);
+            focusRow(listRef.current, id);
+          }}
+          peek={(() => {
+            const o = offers.find((x) => x.offer_id === focusId);
+            if (!o) return null;
+            return (
+              <MapPeek
+                title={o.shop_name}
+                sub={`${o.price != null ? `${shortToman(o.price)} تومان` : 'بدون قیمت'}${listingLabels.get(o.offer_id) ? `، ${listingLabels.get(o.offer_id)}` : ''}`}
+                meta={`${openState(o.open).text}${o.distance_km != null ? `، ${formatKm(o.distance_km)}` : ''}`}
+                place={o}
+                onClose={() => setFocusId(null)}
+                action={
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => (setOpenId(o.offer_id), focusRow(listRef.current, o.offer_id))}>
+                    جزئیات
+                  </button>
+                }
+              />
+            );
+          })()}
+        />
+      )}
+
       {offers.length === 0 ? (
         <div className="empty">
           <p>با این فیلترها مغازه‌ای پیدا نشد{block.excluded_by_filters ? ` (${toFaDigits(block.excluded_by_filters)} مغازه کنار رفت)` : ''}.</p>
@@ -133,9 +162,10 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
           </button>
         </div>
       ) : (
-        <ul className="list">
+        <ul className="list" ref={listRef}>
           {offers.map((o) => (
             <OfferRow
+              focused={focusId === o.offer_id}
               key={o.offer_id}
               offer={o}
               threadId={threadId}
@@ -145,7 +175,10 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
               isCheapest={o.price != null && o.price === cheapest && offers.length > 1}
               isNearest={o.offer_id === nearestId && offers.length > 1}
               expanded={openId === o.offer_id}
-              onToggle={() => setOpenId(openId === o.offer_id ? null : o.offer_id)}
+              onToggle={() => {
+                setOpenId(openId === o.offer_id ? null : o.offer_id);
+                setFocusId(o.offer_id);
+              }}
               selected={isPicked(o)}
               onSelect={() => togglePick(o)}
               onAsk={onAsk}
@@ -188,20 +221,6 @@ export function ShopList({ block: initial, threadId, ctx, onAsk, busy }) {
         </div>
       )}
 
-      <Sheet open={mapOpen} title={product ? cleanTitle(product.title) : 'نقشه'} onClose={() => setMapOpen(false)} tall>
-        {mapOpen && (
-          <MapView
-            offers={offers}
-            origin={ctx?.lat != null ? ctx : null}
-            selectedIds={picked.map((p) => p.offer_id)}
-            onPick={(o) => {
-              setMapOpen(false);
-              setOpenId(o.offer_id);
-              requestAnimationFrame(() => document.getElementById(`offer-${o.offer_id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
-            }}
-          />
-        )}
-      </Sheet>
     </section>
   );
 }
@@ -256,7 +275,7 @@ function distinctListingLabels(offers) {
   return labels;
 }
 
-function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheapest, isNearest, expanded, onToggle, selected, onSelect, onAsk, busy }) {
+function OfferRow({ focused, offer: o, threadId, listingLabel, belowMedian, pick, isCheapest, isNearest, expanded, onToggle, selected, onSelect, onAsk, busy }) {
   const [shop, setShop] = useState(null);
   const [state, setState] = useState('idle'); // idle | loading | error
   const [error, setError] = useState('');
@@ -292,7 +311,7 @@ function OfferRow({ offer: o, threadId, listingLabel, belowMedian, pick, isCheap
   const tag = pick || (isCheapest && 'ارزان‌ترین') || (isNearest && 'نزدیک‌ترین');
 
   return (
-    <li className={`row${expanded ? ' is-open' : ''}${selected ? ' is-selected' : ''}`} id={`offer-${o.offer_id}`}>
+    <li className={`row${expanded ? ' is-open' : ''}${selected ? ' is-selected' : ''}${focused ? ' is-focus' : ''}`} id={`offer-${o.offer_id}`} data-pin={o.offer_id}>
       <div className="row-line">
         <button type="button" className="row-main" aria-expanded={expanded} aria-controls={`detail-${o.offer_id}`} onClick={toggle}>
           <span className="row-text">

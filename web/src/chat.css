@@ -1011,11 +1011,6 @@
   padding: 16px 16px 12px;
 }
 
-.cmp-kicker {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
 
 .cmp-pick {
   margin: 2px 0 0;
@@ -2197,4 +2192,312 @@
   background: var(--bg);
   color: var(--ink);
   box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Inline maps: the map and the list are one object ----------
+   Pins follow the system: selected = Torob red fill (it's the current selection), cheapest = bold ink
+   border (Ink Best rule, never coloured), closed = muted, numbered stops = red dots like the plan timeline. */
+
+.shopmap {
+  position: relative;
+  height: 208px;
+  margin: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--elevated);
+  isolation: isolate;
+}
+
+.card-map .shopmap {
+  margin: 0 16px 12px;
+}
+
+.shop-page .shopmap {
+  margin: 0;
+}
+
+.shopmap.is-full {
+  height: min(70dvh, 640px);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.shopmap-canvas {
+  position: absolute;
+  inset: 0;
+  direction: ltr; /* Leaflet lays markers out in LTR coordinates */
+}
+
+.shopmap-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--elevated) 0%, var(--line) 50%, var(--elevated) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.shopmap-tools {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  z-index: 1000;
+  display: flex;
+  gap: 6px;
+}
+
+.shopmap-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  transition: background-color 0.15s;
+}
+
+.shopmap-btn:hover {
+  background: var(--elevated);
+}
+
+.shopmap-peek {
+  position: absolute;
+  inset-inline: 8px;
+  bottom: 8px;
+  z-index: 1000;
+  animation: peek-in 0.25s var(--ease);
+}
+
+@keyframes peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.peek {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  padding-inline-end: 30px;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+}
+
+.peek-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.peek-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peek-sub,
+.peek-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peek-meta {
+  color: var(--muted);
+}
+
+.peek-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.peek-x {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+.peek-x:hover {
+  background: var(--elevated);
+  color: var(--ink);
+}
+
+/* Pins */
+.shopmap .pin {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm), 0 2px 6px rgb(17 24 39 / 0.12);
+  transition: transform 0.15s var(--ease);
+}
+
+.shopmap .pin:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.shopmap .pin.is-best {
+  border: 2px solid var(--ink);
+  font-weight: 800;
+}
+
+.shopmap .pin.is-closed {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.shopmap .pin.is-sel {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--on-action);
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.shopmap .pin.is-num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--on-action);
+  font-size: 13px;
+}
+
+.shopmap .pin.is-num.is-closed {
+  background: var(--muted);
+}
+
+.shopmap .pin.is-num.is-sel {
+  box-shadow: 0 0 0 4px var(--action-soft), var(--shadow-sm);
+}
+
+/* The row the map points at */
+.row.is-focus,
+.cmp-shop.is-focus,
+.timeline > li.is-focus,
+.slist-stops > li.is-focus {
+  background: var(--elevated);
+  box-shadow: inset 0 0 0 1.5px var(--action);
+  border-radius: 12px;
+  scroll-margin-block: 140px 160px;
+}
+
+.cmp-shop,
+.timeline > li,
+.slist-stops > li,
+.results .row {
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.cmp-shop,
+.timeline > li,
+.slist-stops > li {
+  cursor: pointer;
+}
+
+.cmp-of {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (min-width: 900px) {
+  .shopmap {
+    height: 260px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopmap-placeholder,
+  .shopmap-peek {
+    animation: none;
+  }
+}
+
+/* Map frame (fixed height) with the peek / group chooser under it on inline maps */
+.shopmap {
+  height: auto;
+  background: var(--bg);
+}
+
+.shopmap-frame {
+  position: relative;
+  height: 208px;
+  background: var(--elevated);
+}
+
+.shopmap.is-full .shopmap-frame {
+  height: min(70dvh, 640px);
+}
+
+@media (min-width: 900px) {
+  .shopmap {
+    height: auto;
+  }
+
+  .shopmap-frame {
+    height: 260px;
+  }
+}
+
+.shopmap-under {
+  border-top: 1px solid var(--line);
+  animation: peek-in 0.25s var(--ease);
+}
+
+.shopmap-under .peek {
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg);
+}
+
+.map-group {
+  padding: 10px 12px;
+  background: var(--bg);
+}
+
+.shopmap.is-full .map-group {
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.map-group-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.map-group-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.map-group-chips .chip {
+  flex-shrink: 0;
 }

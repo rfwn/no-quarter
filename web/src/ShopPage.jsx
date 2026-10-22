@@ -5,6 +5,7 @@ import { fetchShop } from './api.js';
 import { cleanTitle, formatKm, neshanHref, openState, priceAge, shortToman, telHref, toFaDigits } from './format.js';
 import { ChatIcon, LinkIcon, PhoneIcon, RouteIcon, SearchIcon } from './Icons.jsx';
 import { Src } from './Source.jsx';
+import ShopMap from './ShopMap.jsx';
 
 /** "شنبه تا چهارشنبه ۹–۲۱" instead of seven identical lines. */
 function groupWeek(week) {
@@ -101,6 +102,10 @@ export default function ShopPage({ shop: initial, shopId, threadId, ctx, onAsk, 
           </a>
         )}
       </div>
+
+      {shop.lat != null && (
+        <ShopMap title={shop.name} points={[{ id: shop.shop_id, lat: shop.lat, lon: shop.lon, label: shop.name, title: shop.name, best: true }]} origin={ctx?.lat != null ? ctx : null} />
+      )}
 
       <dl className="shop-facts">
         <div>

@@ -60,6 +60,12 @@ export const SendIcon = (p) => (
   </Svg>
 );
 
+export const ExpandIcon = (p) => (
+  <Svg {...p}>
+    <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+  </Svg>
+);
+
 export const LocateIcon = (p) => (
   <Svg {...p}>
     <circle cx="12" cy="12" r="6.5" />
