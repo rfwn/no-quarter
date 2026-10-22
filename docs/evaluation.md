@@ -44,7 +44,7 @@ Each scenario sends real Persian messages. Pause-and-ask questions are answered 
 
 ## 3. In the browser (by hand, phone-sized, touch)
 
-Checked with headless Edge at 390×844 and 1280×860, in light and dark:
+Checked with headless Edge at 390×844 and 1280×860. Onboarding, the sidebar and the theme switch were checked in light and dark; the cards and maps in light only so far.
 - onboarding, the sidebar and the follow-up tracker;
 - the location picker (search, map, GPS) and the coverage note;
 - every card type, including inline maps: pin ↔ row linking, passage clusters with a chooser, the peek bar, numbered routes;
