@@ -21,7 +21,7 @@
 | **UX (75)** | Cards, filters and buttons instead of chat-only; inline maps linked to lists; no pop-ups (questions and nudges appear in the chat); light/dark/system theme; onboarding; mascot; Persian copy in a friendly voice |
 | **Intelligence (50)** | LangGraph agent with 22 tools; follow-up with sellers; alternatives when out of stock; visit conditions (time, place, hours, payment); coverage-aware answers; bargaining; [harness rules](docs/architecture.md#harness-rules-enforced-in-code-not-left-to-the-prompt) |
 | **Deploy (40)** | Dockerfile + `liara.json` (disk for chats and traces); health endpoint; CSP; the app still answers when the AI provider is down ([fallbacks](docs/architecture.md#fallbacks)) |
-| **Technical (40)** | [Architecture](docs/architecture.md): generative UI from an allowlist, grounding and governance, tracing and admin, 43 unit tests, 18 behavioural evals (latest 18/18), CI |
+| **Technical (40)** | [Architecture](docs/architecture.md): generative UI from an allowlist, grounding and governance, tracing and admin, 44 unit tests, 18 behavioural evals (latest 18/18), CI |
 | **Dataset (20)** | [docs/data.md](docs/data.md): listed price, price age and confirmed stock are never conflated; unknowns shown as unknown; every fact labelled with its source; payment channel; honest coverage notes |
 
 ## Honest limits

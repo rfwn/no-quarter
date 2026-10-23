@@ -18,13 +18,14 @@ Everything is done with cards, filters and buttons rather than chat alone. Every
 cp .env.example .env              # LLM_API_KEY (BoxAPI AI) · optional NESHAN_* and ADMIN_TOKEN
 npm install && npm run web:install
 npm run db:build                  # torob-dataset.zip → data/torob.db (~35s)
-npm run build                     # web → public/
-npm start                         # http://localhost:3000
+npm run dev                       # http://localhost:3000, hot reload for web/ and restarts for src/
 ```
+
+`npm run dev` runs Vite inside the Node server, so there is one port and the API and security headers match production. For the production setup: `npm run build` (web → `dist/`, not committed), then `npm start`.
 
 | Command | What |
 |---|---|
-| `npm test` | 43 unit tests: governance, catalogue, places and time, buying know-how, product types, harness rules, shopping-list planner |
+| `npm test` | 44 unit tests: governance, catalogue, places and time, buying know-how, product types, harness rules, shopping-list planner |
 | `npm run eval` | Behavioural evals: 18 scenarios through the real agent (search, location, compare, follow-up, out of stock, shop page, model comparison, price-tag photo, bargaining, glossary, shopping list, scope, prompt injection) |
 | `npm run eval -- shop-page model-compare` | Run selected scenarios by id |
 | `/admin?token=$ADMIN_TOKEN` | Trace viewer (per-turn spans, latency, tokens, flags) and audit log |
@@ -105,6 +106,7 @@ The sidebar's «پیگیری‌ها» section tracks every question asked. 22 sh
 
 ```bash
 liara login
+liara app create torobchin --platform docker --plan medium-g2   # once
 liara disk create --app torobchin --name storage --size 1   # once
 liara env set --app torobchin LLM_API_KEY=... ADMIN_TOKEN=... NESHAN_WEB_KEY=... NESHAN_SERVICE_KEY=...
 liara deploy

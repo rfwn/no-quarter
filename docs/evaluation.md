@@ -2,7 +2,7 @@
 
 Three layers, from cheapest to most realistic.
 
-## 1. Unit tests: `npm test` (43 tests, no model calls)
+## 1. Unit tests: `npm test` (44 tests, no model calls)
 
 | File | Covers |
 |---|---|
