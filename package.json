@@ -9,9 +9,8 @@
   },
   "scripts": {
     "start": "node --env-file=.env src/server.js",
-    "dev": "node --watch --env-file=.env src/server.js",
+    "dev": "node --watch --env-file=.env src/server.js --dev",
     "web:install": "npm --prefix web install",
-    "web:dev": "npm --prefix web run dev",
     "build": "npm --prefix web run build",
     "db:build": "node scripts/build-db.js",
     "test": "node --test \"test/*.test.js\"",

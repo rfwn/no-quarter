@@ -9,7 +9,7 @@ web
 ## Stack
 
 - Backend: plain Node.js (no dependencies), `src/server.js`, `src/agent.js`, `src/torob.js`.
-- Web frontend: React + Vite (user's choice), in `web/`, built into `public/` and served by the Node server.
+- Web frontend: React + Vite (user's choice), in `web/`, built into `dist/` and served by the Node server; in dev, Vite runs inside the Node server with hot reload.
 - Later channel: Instagram DM bot via BoxAPI (boxapi.ir), reusing the same `chat()` agent. Replies must therefore read well as plain text.
 
 ## Users

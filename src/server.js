@@ -71,7 +71,8 @@ import { verifyWebhook, parseWebhook, profileOf, sendDm, boxapiStatus } from './
 import { renderText } from './channels/text.js';
 
 const PORT = Number(process.env.PORT) || 3000;
-const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
+const DEV = process.argv.includes('--dev'); // `npm run dev`: Vite serves the web app with hot reload
+const DIST_DIR = fileURLToPath(new URL('../dist/', import.meta.url));
 const ADMIN_PAGE = fileURLToPath(new URL('./admin.html', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff' };
 const THREAD_RE = /^[\w-]{8,80}$/;
@@ -117,7 +118,7 @@ function isAdmin(req, url) {
 async function serveFile(res, file, type) {
   try {
     const body = await readFile(file);
-    const cache = file.includes(`${PUBLIC_DIR}assets`) || file.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache';
+    const cache = file.includes(`${DIST_DIR}assets`) || file.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache';
     res.writeHead(200, { 'Content-Type': type || MIME[extname(file)] || 'application/octet-stream', 'Cache-Control': cache });
     res.end(body);
   } catch {
@@ -168,9 +169,10 @@ async function handleWebhook(req, res) {
 
 // Security headers on every response. The CSP lists exactly what the page loads: our own bundle, Torob
 // product images, OpenStreetMap tiles, and Neshan's map SDK/tiles/API (used when its key works).
+// In dev, Vite adds one inline script (React's hot-reload preamble); nothing else differs.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' https://static.neshan.org",
+  `script-src 'self'${DEV ? " 'unsafe-inline'" : ''} https://static.neshan.org`,
   "style-src 'self' 'unsafe-inline' https://static.neshan.org",
   "img-src 'self' data: blob: https://*.torob.com https://tile.openstreetmap.org https://*.neshan.org",
   "connect-src 'self' https://api.neshan.org",
@@ -191,7 +193,8 @@ function securityHeaders(req, res) {
   if (req.headers['x-forwarded-proto'] === 'https') res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 }
 
-createServer(async (req, res) => {
+let vite = null;
+const server = createServer(async (req, res) => {
   securityHeaders(req, res);
   const url = new URL(req.url, 'http://localhost');
   try {
@@ -301,10 +304,12 @@ createServer(async (req, res) => {
       return sendJson(res, 404, { error: 'Not found' });
     }
 
+    if (vite) return vite.middlewares(req, res, () => sendJson(res, 404, { error: 'Not found' }));
+
     if (req.method === 'GET') {
       const path = url.pathname === '/' ? 'index.html' : url.pathname;
-      const file = normalize(join(PUBLIC_DIR, path));
-      if (!file.startsWith(normalize(PUBLIC_DIR))) return sendJson(res, 403, { error: 'Forbidden' });
+      const file = normalize(join(DIST_DIR, path));
+      if (!file.startsWith(normalize(DIST_DIR))) return sendJson(res, 403, { error: 'Forbidden' });
       return serveFile(res, file);
     }
     sendJson(res, 405, { error: 'Method not allowed' });
@@ -313,4 +318,8 @@ createServer(async (req, res) => {
     if (!res.headersSent) sendJson(res, err.status || 500, { error: err.status ? err.message : 'خطایی رخ داد. دوباره تلاش کنید.' });
     else res.end();
   }
-}).listen(PORT, () => console.log(`Torob in-store agent ${config.version} → http://localhost:${PORT}`));
+});
+
+// web/ only exists in the source tree, not in the production image, so it's imported only in dev.
+if (DEV) vite = await (await import('../web/dev-server.js')).createDevServer(server);
+server.listen(PORT, () => console.log(`Torob in-store agent ${config.version}${DEV ? ' (dev, hot reload)' : ''} → http://localhost:${PORT}`));

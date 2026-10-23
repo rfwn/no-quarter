@@ -22,7 +22,7 @@ ENV NODE_ENV=production \
     DATA_DIR=/app/storage
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/db ./db
-COPY --from=build /app/public ./public
+COPY --from=build /app/dist ./dist
 COPY --from=build /app/src ./src
 COPY --from=build /app/package.json ./
 # /app/storage is a Liara disk: checkpoints, follow-ups, traces, audit log.
