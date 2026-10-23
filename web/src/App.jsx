@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { fetchAreas, fetchCoverage, fetchThread, getThreadId, loadChats, newThreadId, removeChat, setCurrentThread, streamChat, touchChat } from './api.js';
 import { Block, QUESTION_TYPES } from './GenUI.jsx';
 import { formatKm, toFaDigits } from './format.js';
@@ -97,12 +97,35 @@ export default function App() {
       return false;
     }
   });
+  // Wide screens: opening the sidebar pushes the page. The layout changes once and the content glides
+  // from where it was with a transform (FLIP), so cards and maps aren't re-laid out on every frame.
+  const mainRef = useRef(null);
+  const dockRef = useRef(null);
+  const flipFrom = useRef(null);
+  const centerX = (el) => {
+    const r = el?.getBoundingClientRect();
+    return r ? (r.left + r.right) / 2 : null;
+  };
   const setDrawerOpen = (v) => {
+    flipFrom.current = [mainRef, dockRef].map((ref) => {
+      const x = centerX(ref.current); // measured mid-glide too, so reversing starts from where it is
+      ref.current?.getAnimations().forEach((a) => a.cancel());
+      return x;
+    });
     setDrawerOpenState(v);
     try {
       localStorage.setItem('torobchin-sidebar', v ? '1' : '0');
     } catch {}
   };
+  useLayoutEffect(() => {
+    const from = flipFrom.current;
+    flipFrom.current = null;
+    if (!from || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    [mainRef, dockRef].forEach((ref, i) => {
+      const dx = from[i] == null || !ref.current ? 0 : from[i] - centerX(ref.current);
+      if (Math.abs(dx) > 0.5) ref.current.animate([{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: 280, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    });
+  }, [drawerOpen]);
   const narrow = () => window.matchMedia('(max-width: 1023px)').matches;
   const [chats, setChats] = useState(loadChats);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -311,7 +334,7 @@ export default function App() {
         <LevelChip onOpen={() => setProfileOpen(true)} />
       </nav>
 
-      <div className="main">
+      <div className="main" ref={mainRef}>
         <header className="topbar">
           <p className="chat-title">{empty ? '' : turns[0].query}</p>
           <button type="button" className={`place-pill${origin.lat != null ? ' is-set' : ''}`} onClick={() => setPlaceOpen(true)} aria-label={origin.place ? `موقعیت: ${origin.place}. تغییر` : 'انتخاب موقعیت'}>
@@ -368,7 +391,7 @@ export default function App() {
                 </div>
               ))}
             </main>
-            <div className="dock">
+            <div className="dock" ref={dockRef}>
               <Nudges threadId={threadId} turns={turns} onAsk={ask} busy={busy} />
               {composer}
               <p className="disclaimer">ترب‌چین ممکنه اشتباه کنه. قیمت‌ها ثبت‌شده‌ان؛ قبل از رفتن بپرس.</p>

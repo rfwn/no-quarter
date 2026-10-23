@@ -597,15 +597,11 @@
   color: var(--muted);
 }
 
-/* Wide screens: the open panel takes the rail's place and pushes the page. */
+/* Wide screens: the open panel takes the rail's place and pushes the page.
+   The push isn't a margin transition: App.jsx glides the content with a transform (FLIP). */
 @media (min-width: 1024px) {
   .app.has-drawer .rail {
     visibility: hidden;
-  }
-
-  .main,
-  .dock {
-    transition: margin 0.28s var(--ease), inset-inline-start 0.28s var(--ease);
   }
 
   .app.has-drawer .main {

@@ -608,6 +608,7 @@ img {
 
 .row-main {
   flex: 1;
+  width: 100%;
   min-width: 0; /* let long addresses truncate instead of pushing the price out */
   display: flex;
   align-items: center;
@@ -616,6 +617,7 @@ img {
   padding: 12px 16px;
   text-align: start;
   transition: background-color 0.15s;
+  width: 100%;
 }
 
 .row-main:hover:not(:disabled) {
