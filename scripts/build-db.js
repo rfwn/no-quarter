@@ -10,8 +10,7 @@ import { normalizeText } from '../src/data/normalize.js';
 
 const DATASET_DIR = process.env.DATASET_DIR || 'data/dataset';
 const DB_PATH = process.env.DB_PATH || 'data/torob.db';
-// torob-dataset.zip supersedes the earlier Starcoach v16 export (same products/offers; it is the official one now).
-const ZIP = process.env.DATASET_ZIP || ['torob-dataset.zip', 'starcoach-dataset-v16-cap300-csv.zip'].find(existsSync) || 'torob-dataset.zip';
+const ZIP = process.env.DATASET_ZIP || 'torob-dataset.zip';
 
 if (!existsSync(join(DATASET_DIR, 'shops.csv'))) {
   if (!existsSync(ZIP)) throw new Error(`Dataset not found: put ${ZIP} in the project root or CSVs in ${DATASET_DIR}`);

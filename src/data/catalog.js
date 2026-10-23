@@ -1,4 +1,4 @@
-// Read-only access to the Starcoach dataset (data/torob.db, built by scripts/build-db.js).
+// Read-only access to the Torob hackathon dataset (data/torob.db, built by scripts/build-db.js).
 // Shops (6.5k) live in memory for fast geo filtering; products/offers are queried from SQLite.
 import Database from 'better-sqlite3';
 import { existsSync } from 'node:fs';

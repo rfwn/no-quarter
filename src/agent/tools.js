@@ -1,4 +1,4 @@
-// The agent's tools over the Starcoach dataset, in three kinds (see harness/registry.js):
+// The agent's tools over the Torob hackathon dataset, in three kinds (see harness/registry.js):
 //   data  — dataset lookups and Instagram evidence; produce grounded facts
 //   ui    — generative UI: the model picks a component and passes ids; the harness hydrates real data,
 //           so a component can never show a price, phone or distance the data didn't contain
