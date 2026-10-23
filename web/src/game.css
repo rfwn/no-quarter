@@ -34,11 +34,13 @@
   padding: 8px var(--gutter);
   background: var(--bg);
   border-bottom: 1px solid var(--line);
-  transition: background-color 0.4s var(--ease);
+  box-shadow: inset 0 0 0 100vmax transparent;
+  transition: box-shadow 0.4s var(--ease);
 }
 
 .mission.is-done {
-  background: var(--reward-soft);
+  /* The dark tint is translucent: paint it over the opaque page colour so the chat doesn't show through. */
+  box-shadow: inset 0 0 0 100vmax var(--reward-soft);
 }
 
 .mission-body {
