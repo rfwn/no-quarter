@@ -2,7 +2,7 @@
 
 **What it is:** an AI shopping agent for buying things *in person* in Tehran's shops and passages, built on the Torob hackathon dataset. It is a chat with cards, filters and maps, phone-first and Persian RTL, styled like TorobChat.
 
-**Try it:** `<live URL on Liara>` · Demo video: `<link>` · Demo script: [docs/demo.md](docs/demo.md)
+**Try it:** [torobchin.liara.run](https://torobchin.liara.run) · Prompts to try: [README](README.md#try-it)
 
 ## The four steps
 
